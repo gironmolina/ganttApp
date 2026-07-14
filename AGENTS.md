@@ -6,15 +6,15 @@ Gantt-chart project planner — TanStack Start + React 19 + Vite 8 + Tailwind v4
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `npm start` / `npm run dev` | Dev server (port 8080) |
-| `npm run build` | Production build |
-| `npm test` | Vitest (jsdom, single run) |
-| `npm run test:watch` | Vitest watch mode |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier write |
-| `npx tsc --noEmit` | Typecheck (no npm script) |
+| Command                     | What it does               |
+| --------------------------- | -------------------------- |
+| `npm start` / `npm run dev` | Dev server (port 8080)     |
+| `npm run build`             | Production build           |
+| `npm test`                  | Vitest (jsdom, single run) |
+| `npm run test:watch`        | Vitest watch mode          |
+| `npm run lint`              | ESLint                     |
+| `npm run format`            | Prettier write             |
+| `npx tsc --noEmit`          | Typecheck (no npm script)  |
 
 Validation order: `npm run lint` → `npx tsc --noEmit` → `npm test`. All green before done.
 
@@ -32,9 +32,9 @@ Validation order: `npm run lint` → `npx tsc --noEmit` → `npm test`. All gree
 
 Two stores in `src/lib/`, both using `useSyncExternalStore` + localStorage + server sync:
 
-| Store | File | localStorage key | Interface |
-|---|---|---|---|
-| Tasks | `gantt-store.ts` | `gantt-tasks-v1` | `Task` |
+| Store    | File                | localStorage key    | Interface         |
+| -------- | ------------------- | ------------------- | ----------------- |
+| Tasks    | `gantt-store.ts`    | `gantt-tasks-v1`    | `Task`            |
 | Settings | `settings-store.ts` | `gantt-settings-v1` | `ProjectSettings` |
 
 Lifecycle: hydrate from localStorage → fetch from server (`getProjectData`) → on mutation, persist to localStorage + fire `mergeProjectData` async.
@@ -108,14 +108,14 @@ src/
 
 ## Layer boundaries
 
-| Layer | Location | Owns |
-|---|---|---|
-| Server functions | `src/lib/json-persist.ts` | reading/writing `project-data.json` only |
-| Client stores | `src/lib/gantt-store.ts`, `src/lib/settings-store.ts` | state, localStorage, server sync |
-| Gantt components | `src/components/gantt/` | timeline, task list, detail, settings dialog |
-| UI primitives | `src/components/ui/` | shadcn/ui (do not hand-edit) |
-| Routes | `src/routes/` | page-level composition only |
-| Pure utilities | `src/lib/gantt-utils.ts` | testable date/timeline logic, no side effects, no React imports |
+| Layer            | Location                                              | Owns                                                            |
+| ---------------- | ----------------------------------------------------- | --------------------------------------------------------------- |
+| Server functions | `src/lib/json-persist.ts`                             | reading/writing `project-data.json` only                        |
+| Client stores    | `src/lib/gantt-store.ts`, `src/lib/settings-store.ts` | state, localStorage, server sync                                |
+| Gantt components | `src/components/gantt/`                               | timeline, task list, detail, settings dialog                    |
+| UI primitives    | `src/components/ui/`                                  | shadcn/ui (do not hand-edit)                                    |
+| Routes           | `src/routes/`                                         | page-level composition only                                     |
+| Pure utilities   | `src/lib/gantt-utils.ts`                              | testable date/timeline logic, no side effects, no React imports |
 
 ## Path alias
 

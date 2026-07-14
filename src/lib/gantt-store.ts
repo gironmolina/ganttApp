@@ -13,6 +13,7 @@ export interface Comment {
 export interface Task {
   id: string;
   parentId: string | null;
+  position: number;
   title: string;
   assignee: string;
   startDate: string;
@@ -45,6 +46,7 @@ function seed(): Task[] {
     {
       id: p1,
       parentId: null,
+      position: 0,
       title: "Planificación del proyecto",
       assignee: "Ana Torres",
       startDate: t,
@@ -57,6 +59,7 @@ function seed(): Task[] {
     {
       id: uid(),
       parentId: p1,
+      position: 0,
       title: "Definir alcance",
       assignee: "Ana Torres",
       startDate: t,
@@ -69,6 +72,7 @@ function seed(): Task[] {
     {
       id: uid(),
       parentId: p1,
+      position: 1,
       title: "Kick-off con stakeholders",
       assignee: "Luis Pérez",
       startDate: addDays(t, 3),
@@ -82,6 +86,7 @@ function seed(): Task[] {
     {
       id: p2,
       parentId: null,
+      position: 1,
       title: "Desarrollo MVP",
       assignee: "Equipo Dev",
       startDate: addDays(t, 7),
@@ -94,6 +99,7 @@ function seed(): Task[] {
     {
       id: uid(),
       parentId: p2,
+      position: 0,
       title: "Diseño UI",
       assignee: "María Gómez",
       startDate: addDays(t, 7),
@@ -124,6 +130,22 @@ async function loadFromServer(): Promise<Task[] | null> {
   }
 }
 
+function ensurePositions(taskList: Task[]): Task[] {
+  const hasPosition = taskList.some((t) => t.position !== undefined);
+  if (hasPosition) return taskList;
+  const byParent = new Map<string | null, Task[]>();
+  for (const t of taskList) {
+    const arr = byParent.get(t.parentId) ?? [];
+    arr.push(t);
+    byParent.set(t.parentId, arr);
+  }
+  for (const arr of byParent.values())
+    arr.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.title.localeCompare(b.title));
+  const positionMap = new Map<string, number>();
+  for (const arr of byParent.values()) arr.forEach((t, i) => positionMap.set(t.id, i));
+  return taskList.map((t) => ({ ...t, position: positionMap.get(t.id) ?? 0 }));
+}
+
 function loadFromLocalStorage(): Task[] {
   if (typeof window === "undefined") return [];
   try {
@@ -133,7 +155,7 @@ function loadFromLocalStorage(): Task[] {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
       return s;
     }
-    return JSON.parse(raw);
+    return ensurePositions(JSON.parse(raw));
   } catch {
     return [];
   }
@@ -200,9 +222,12 @@ export const store = {
       if (startDate < parent.startDate) startDate = parent.startDate;
       if (endDate < startDate) endDate = startDate;
     }
+    const siblings = tasks.filter((x) => x.parentId === (partial.parentId ?? null));
+    const maxPos = siblings.length ? Math.max(...siblings.map((s) => s.position)) : -1;
     const newTask: Task = {
       id: uid(),
       parentId: partial.parentId ?? null,
+      position: maxPos + 1,
       title: partial.title,
       assignee: partial.assignee ?? "",
       startDate,
@@ -271,6 +296,20 @@ export const store = {
           }
         : t,
     );
+    persist();
+  },
+  reorder(taskId: string, toIndex: number) {
+    const task = tasks.find((x) => x.id === taskId);
+    if (!task) return;
+    const siblings = tasks
+      .filter((x) => x.parentId === task.parentId)
+      .sort((a, b) => a.position - b.position);
+    const fromIndex = siblings.findIndex((x) => x.id === taskId);
+    if (fromIndex === -1 || fromIndex === toIndex) return;
+    const [moved] = siblings.splice(fromIndex, 1);
+    siblings.splice(toIndex, 0, moved);
+    const updated = new Map(siblings.map((s, i) => [s.id, i]));
+    tasks = tasks.map((t) => (updated.has(t.id) ? { ...t, position: updated.get(t.id)! } : t));
     persist();
   },
 };

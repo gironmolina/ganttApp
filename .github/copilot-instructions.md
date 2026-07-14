@@ -47,9 +47,11 @@ Do not start editing immediately.
 Before any change, respond with this structure:
 
 ### Objective
+
 Briefly restate the task.
 
 ### Architecture placement
+
 Explain where the change belongs:
 
 - Routes (TanStack Start file-based routing): `src/routes`
@@ -68,12 +70,15 @@ Example:
 `Component (renderer) -> store (src/lib) -> server function (src/lib/json-persist.ts) -> project-data.json`
 
 ### Files to inspect
+
 List the real files you need to inspect first.
 
 ### Expected files to modify
+
 List only the files you currently expect to change.
 
 ### Risk check
+
 Confirm:
 
 - no invented files or APIs
@@ -235,42 +240,52 @@ At minimum, reflect updates in these sections when relevant:
 Use this architecture as the source of truth.
 
 ### Routes (TanStack Start file-based routing)
+
 - `src/routes/`
 
 ### State stores (client-side)
+
 - `src/lib/gantt-store.ts` — tasks
 - `src/lib/settings-store.ts` — project settings
 
 ### Server functions (JSON persistence)
+
 - `src/lib/json-persist.ts`
 - persisted file: `project-data.json` (project root)
 
 ### Gantt chart components
+
 - `src/components/gantt/`
 
 ### UI primitives (shadcn/ui)
+
 - `src/components/ui/`
 
 ### Hooks
+
 - `src/hooks/`
 
 ### Pure utilities
+
 - `src/lib/gantt-utils.ts`
 - `src/lib/utils.ts`
 
 ### App shell / SSR / Start instance
+
 - `src/routes/__root.tsx` — root route, app shell, error/404 boundaries
 - `src/server.ts` — SSR entry with h3 error wrapper
 - `src/start.ts` — TanStack Start instance with error + CSRF middleware
 - `src/router.tsx` — createRouter with QueryClient context
 
 ### Build configuration
+
 - `vite.config.ts`
 - `vitest.config.ts`
 - `eslint.config.js`
 - `tsconfig.json`
 
 ### Active TypeScript path alias
+
 - `@/*` → `./src/*` (configured in `tsconfig.json` and `vite.config.ts`)
 
 Example:
@@ -280,6 +295,7 @@ Example:
 Do not invent additional aliases.
 
 ### shadcn/ui config
+
 - `components.json` — style: new-york, baseColor: slate, iconLibrary: lucide
 - aliases: `@/components`, `@/lib/utils`, `@/components/ui`, `@/lib`, `@/hooks`
 
@@ -334,6 +350,7 @@ Unless the user explicitly requests them.
 This repository has clear layer boundaries.
 
 ### Server functions (`src/lib/json-persist.ts`)
+
 Use for:
 
 - reading/writing `project-data.json`
@@ -342,6 +359,7 @@ Use for:
 Do not introduce a separate database, ORM, or remote API unless the user explicitly asks.
 
 ### Client-side stores (`src/lib/gantt-store.ts`, `src/lib/settings-store.ts`)
+
 Use for:
 
 - task and settings state
@@ -352,12 +370,14 @@ Use for:
 Do not duplicate store logic into components or routes.
 
 ### Components (`src/components/gantt/`, `src/components/ui/`)
+
 Use for:
 
 - Gantt chart timeline, task list, task detail, settings dialog
 - shadcn/ui primitives
 
 ### Routes (`src/routes/`)
+
 Use for:
 
 - TanStack Start file-based routing
@@ -366,6 +386,7 @@ Use for:
 Do not create `src/pages/`, `_app/`, or `app/layout.tsx`.
 
 ### Pure utilities (`src/lib/gantt-utils.ts`)
+
 Use for:
 
 - testable date/timeline/sprint logic
@@ -427,21 +448,27 @@ Do not collapse these steps.
 Use only real repository commands.
 
 ### Unit tests
+
 `npm test`
 
 ### Typecheck
+
 `npx tsc --noEmit` (no script defined; run manually)
 
 ### Lint
+
 `npm run lint`
 
 ### Format
+
 `npm run format`
 
 ### Build app
+
 `npm run build`
 
 ### Dev
+
 `npm start` (alias of `npm run dev`)
 
 Only report results from commands you actually ran.
@@ -478,17 +505,20 @@ Use `console.error` / `console.log` following the existing repository convention
 Prefer the following locations depending on the change.
 
 ### Server function changes
+
 Prefer:
 
 - `src/lib/json-persist.ts`
 
 ### State management changes
+
 Prefer:
 
 - `src/lib/gantt-store.ts` (tasks)
 - `src/lib/settings-store.ts` (settings)
 
 ### UI and routes
+
 Prefer:
 
 - `src/components/gantt/` — Gantt components
@@ -496,6 +526,7 @@ Prefer:
 - `src/routes/` — pages
 
 ### Reusable types and constants
+
 - `src/lib/gantt-store.ts` — `Task`, `Comment`, `BlockStatus` interfaces
 - `src/lib/settings-store.ts` — `ProjectSettings` interface
 - `src/lib/gantt-utils.ts` — `TimelineResult`, `Sprint`, constants
@@ -631,15 +662,19 @@ A task is complete only if all of these are true:
 After making changes, always report:
 
 ### Touched files
+
 List every file changed.
 
 ### Commands executed
+
 List every command actually run.
 
 ### Validation results
+
 State what passed, what failed, and what was not run.
 
 ### Notes
+
 Mention any limitation, follow-up risk, or unresolved issue.
 
 Do not say "everything works" unless you verified it.

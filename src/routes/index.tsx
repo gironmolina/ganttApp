@@ -36,8 +36,7 @@ function buildOrder(tasks: Task[], collapsed: Set<string>) {
     arr.push(t);
     byParent.set(t.parentId, arr);
   }
-  for (const arr of byParent.values())
-    arr.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.title.localeCompare(b.title));
+  for (const arr of byParent.values()) arr.sort((a, b) => a.position - b.position);
   const order: Task[] = [];
   const depth: Record<string, number> = {};
   const walk = (parentId: string | null, d: number) => {

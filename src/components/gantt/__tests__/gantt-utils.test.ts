@@ -17,6 +17,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: "t1",
     parentId: null,
+    position: 0,
     title: "Test",
     assignee: "",
     startDate: "2026-05-01",

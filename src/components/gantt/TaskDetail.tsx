@@ -35,19 +35,19 @@ export function TaskDetail({
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-5">
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          {parent && (
-            <div className="text-xs text-muted-foreground">Subtarea de: {parent.title}</div>
-          )}
-          <Input
-            value={task.title}
-            onChange={(e) => store.update(task.id, { title: e.target.value })}
-            className="mt-1 border-none px-0 text-lg font-semibold shadow-none focus-visible:ring-0"
-          />
-        </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        {parent && <div className="text-xs text-muted-foreground">Subtarea de: {parent.title}</div>}
+        <Button variant="ghost" size="icon" className="ml-auto" onClick={onClose}>
           ×
         </Button>
+      </div>
+
+      <div>
+        <Label>Nombre</Label>
+        <Input
+          value={task.title}
+          onChange={(e) => store.update(task.id, { title: e.target.value })}
+          placeholder="Nombre de la tarea"
+        />
       </div>
 
       <div>
