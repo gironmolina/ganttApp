@@ -33,6 +33,7 @@
   --color-status-blocked: var(--status-blocked);
   --color-status-partial: var(--status-partial);
   --color-status-pending: var(--status-pending);
+  --color-status-delayed: var(--status-delayed);
   --color-today: var(--today);
 }
 
@@ -63,6 +64,7 @@
   --status-blocked: oklch(0.6 0.22 25);
   --status-partial: oklch(0.75 0.17 75);
   --status-pending: oklch(0.7 0.02 250);
+  --status-delayed: oklch(0.78 0.16 85);
   --today: oklch(0.58 0.22 15);
 }
 
@@ -86,6 +88,7 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.7 0.17 255);
+  --status-delayed: oklch(0.78 0.16 85);
 }
 
 @layer base {

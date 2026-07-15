@@ -156,6 +156,17 @@ export function GanttChart({
               aWidth = Math.max(COL_WIDTH * 0.6, (aTo - aFrom + 1) * COL_WIDTH - 2);
             }
 
+            const isDelayed =
+              hasActual &&
+              hasPlanned &&
+              !!task.endDate &&
+              !!task.actualEndDate &&
+              task.actualEndDate > task.endDate;
+            const delayLeft = isDelayed ? pLeft + pWidth : 0;
+            const delayWidth = isDelayed ? aLeft + aWidth - (pLeft + pWidth) : 0;
+            const normalLeft = aLeft;
+            const normalWidth = isDelayed ? delayLeft - aLeft : aWidth;
+
             return (
               <div
                 key={task.id}
@@ -188,24 +199,33 @@ export function GanttChart({
                 )}
 
                 {hasActual ? (
-                  <button
-                    onClick={() => onSelect(task.id)}
-                    className={cn(
-                      "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden rounded-md text-left text-xs text-white shadow-sm transition hover:brightness-110",
-                      barBgColor,
-                      isParent && "opacity-90 ring-1 ring-white/30",
+                  <>
+                    <button
+                      onClick={() => onSelect(task.id)}
+                      className={cn(
+                        "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden rounded-l-md text-left text-xs text-white shadow-sm transition hover:brightness-110",
+                        barBgColor,
+                        isParent && "opacity-90 ring-1 ring-white/30",
+                      )}
+                      style={{ left: normalLeft, width: normalWidth, height: 22, zIndex: 1 }}
+                      title={`Real: ${task.title} · ${progress}%${hasPlanned ? ` · Plan: ${task.startDate} → ${task.endDate}` : ""}`}
+                    >
+                      <div
+                        className="absolute inset-y-0 left-0 bg-black/25"
+                        style={{ width: `${Math.min(100, (progress * aWidth) / normalWidth)}%` }}
+                      />
+                      <span className="relative z-10 truncate px-2 font-medium">
+                        {task.title} · {progress}%
+                      </span>
+                    </button>
+                    {isDelayed && delayWidth > 0 && (
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 rounded-r-md bg-[var(--status-delayed)]"
+                        style={{ left: delayLeft, width: delayWidth, height: 22, zIndex: 1 }}
+                        title={`Retraso: ${task.endDate} → ${task.actualEndDate}`}
+                      />
                     )}
-                    style={{ left: aLeft, width: aWidth, height: 22, zIndex: 1 }}
-                    title={`Real: ${task.title} · ${progress}%${hasPlanned ? ` · Plan: ${task.startDate} → ${task.endDate}` : ""}`}
-                  >
-                    <div
-                      className="absolute inset-y-0 left-0 bg-black/25"
-                      style={{ width: `${progress}%` }}
-                    />
-                    <span className="relative z-10 truncate px-2 font-medium">
-                      {task.title} · {progress}%
-                    </span>
-                  </button>
+                  </>
                 ) : hasPlanned ? (
                   <div
                     onClick={() => onSelect(task.id)}

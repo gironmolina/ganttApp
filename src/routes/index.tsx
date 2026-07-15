@@ -249,6 +249,7 @@ function Legend() {
     { c: "var(--status-complete)", l: "Completada" },
     { c: "var(--status-partial)", l: "Bloqueo parcial" },
     { c: "var(--status-blocked)", l: "Bloqueo total" },
+    { c: "var(--status-delayed)", l: "Retrasado" },
     { c: "var(--today)", l: "Hoy" },
   ];
   return (
