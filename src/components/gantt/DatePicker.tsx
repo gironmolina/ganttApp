@@ -17,15 +17,18 @@ export function DatePicker({
   onChange,
   min,
   className,
+  focusMonth,
 }: {
   value: string;
   onChange: (iso: string) => void;
   min?: string;
   className?: string;
+  focusMonth?: string;
 }) {
   const [open, setOpen] = useState(false);
   const selected = value ? new Date(value + "T00:00:00") : undefined;
   const minDate = min ? new Date(min + "T00:00:00") : undefined;
+  const defaultMonth = selected ?? (focusMonth ? new Date(focusMonth + "T00:00:00") : undefined);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -46,6 +49,7 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={selected}
+          defaultMonth={defaultMonth}
           onSelect={(date) => {
             if (date) {
               const y = date.getFullYear();

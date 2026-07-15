@@ -16,8 +16,8 @@ export interface Task {
   position: number;
   title: string;
   assignee: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   actualStartDate?: string;
   actualEndDate?: string;
   progress: number;
@@ -131,8 +131,8 @@ async function loadFromServer(): Promise<Task[] | null> {
 }
 
 function ensurePositions(taskList: Task[]): Task[] {
-  const hasPosition = taskList.some((t) => t.position !== undefined);
-  if (hasPosition) return taskList;
+  const needsFix = taskList.some((t) => t.position === undefined || t.position === null);
+  if (!needsFix) return taskList;
   const byParent = new Map<string | null, Task[]>();
   for (const t of taskList) {
     const arr = byParent.get(t.parentId) ?? [];
@@ -215,13 +215,6 @@ export function _resetForTesting() {
 export const store = {
   add(partial: Partial<Task> & { title: string }) {
     const t = today();
-    const parent = partial.parentId ? tasks.find((x) => x.id === partial.parentId) : null;
-    let startDate = partial.startDate ?? (parent ? parent.startDate : t);
-    let endDate = partial.endDate ?? addDays(startDate, 3);
-    if (parent) {
-      if (startDate < parent.startDate) startDate = parent.startDate;
-      if (endDate < startDate) endDate = startDate;
-    }
     const siblings = tasks.filter((x) => x.parentId === (partial.parentId ?? null));
     const maxPos = siblings.length ? Math.max(...siblings.map((s) => s.position)) : -1;
     const newTask: Task = {
@@ -230,8 +223,11 @@ export const store = {
       position: maxPos + 1,
       title: partial.title,
       assignee: partial.assignee ?? "",
-      startDate,
-      endDate,
+      startDate: partial.startDate || undefined,
+      endDate:
+        partial.endDate && partial.startDate && partial.endDate < partial.startDate
+          ? partial.startDate
+          : partial.endDate || undefined,
       progress: partial.progress ?? 0,
       block: partial.block ?? "none",
       blockReason: partial.blockReason,
@@ -249,19 +245,32 @@ export const store = {
 
     if (next.parentId) {
       const parent = tasks.find((x) => x.id === next.parentId);
-      if (parent && next.startDate < parent.startDate) {
+      if (parent?.startDate && next.startDate && next.startDate < parent.startDate) {
         next.startDate = parent.startDate;
       }
     }
-    if (next.endDate < next.startDate) next.endDate = next.startDate;
+
+    if (!next.startDate && next.endDate) {
+      next.endDate = undefined;
+    }
+    if (next.startDate && next.endDate && next.endDate < next.startDate) {
+      next.endDate = next.startDate;
+    }
+
+    if (!next.actualStartDate && next.actualEndDate) {
+      next.actualEndDate = undefined;
+    }
+    if (next.actualStartDate && next.actualEndDate && next.actualEndDate < next.actualStartDate) {
+      next.actualEndDate = next.actualStartDate;
+    }
 
     tasks = tasks.map((x) => (x.id === id ? next : x));
 
-    if (patch.startDate && next.startDate !== target.startDate) {
+    if (patch.startDate && next.startDate && next.startDate !== target.startDate) {
       tasks = tasks.map((x) => {
         if (x.parentId !== id) return x;
-        if (x.startDate < next.startDate) {
-          const end = x.endDate < next.startDate ? next.startDate : x.endDate;
+        if (x.startDate && x.startDate < next.startDate!) {
+          const end = !x.endDate || x.endDate < next.startDate! ? next.startDate! : x.endDate;
           return { ...x, startDate: next.startDate, endDate: end };
         }
         return x;

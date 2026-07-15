@@ -68,8 +68,8 @@ export function buildTimeline(
     mn = Infinity;
     mx = -Infinity;
     for (const t of tasks) {
-      mn = Math.min(mn, parseDate(t.startDate));
-      mx = Math.max(mx, parseDate(t.endDate));
+      if (t.startDate) mn = Math.min(mn, parseDate(t.startDate));
+      if (t.endDate) mx = Math.max(mx, parseDate(t.endDate));
     }
     mn -= DAY_MS * 3;
     mx += DAY_MS * 5;
@@ -133,6 +133,23 @@ export function buildSprints(workdays: Date[], weekStarts: number[]): Sprint[] {
     });
   }
   return s;
+}
+
+export function countWorkdays(fromIso: string, toIso: string): number {
+  const from = parseDate(fromIso);
+  const to = parseDate(toIso);
+  if (to < from) return 0;
+  let count = 0;
+  const d = new Date(from);
+  while (d.getTime() <= to) {
+    if (!isWeekend(d)) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return Math.max(1, count);
+}
+
+export function computeProgress(task: Task): number {
+  return task.progress;
 }
 
 export function findDateIndex(

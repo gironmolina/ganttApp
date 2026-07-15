@@ -23,19 +23,18 @@ describe("gantt-store", () => {
       expect(t.id).toBeTruthy();
     });
 
-    it("creates a subtask clamped to parent startDate", () => {
+    it("creates a subtask without dates by default", () => {
       const parent = store.add({ title: "Parent", startDate: "2026-03-01" });
       const child = store.add({ title: "Child", parentId: parent.id });
       expect(child.parentId).toBe(parent.id);
-      expect(child.startDate).toBe(parent.startDate);
+      expect(child.startDate).toBeUndefined();
+      expect(child.endDate).toBeUndefined();
     });
 
     it("clamps subtask endDate to startDate if earlier", () => {
-      const parent = store.add({ title: "Parent", startDate: "2026-03-01" });
       const child = store.add({
         title: "Child",
-        parentId: parent.id,
-        startDate: "2026-02-01",
+        startDate: "2026-03-01",
         endDate: "2026-01-15",
       });
       expect(child.startDate).toBe("2026-03-01");

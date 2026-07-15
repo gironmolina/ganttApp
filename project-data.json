@@ -43,15 +43,11 @@
       "parentId": null,
       "title": "Discovery",
       "assignee": "Plain Concepts",
-      "startDate": "2026-05-04",
-      "endDate": "2026-06-08",
-      "progress": 40,
+      "progress": 30,
       "block": "none",
       "comments": [],
       "createdAt": "2026-07-14",
-      "position": 0,
-      "actualStartDate": "2026-05-04",
-      "actualEndDate": "2026-06-26"
+      "position": 0
     },
     {
       "id": "if8824yl",
@@ -120,6 +116,19 @@
       "parentId": "if8824yl",
       "position": null,
       "title": "Dimensión",
+      "assignee": "",
+      "startDate": "2026-07-14",
+      "endDate": "2026-07-17",
+      "progress": 0,
+      "block": "none",
+      "comments": [],
+      "createdAt": "2026-07-14"
+    },
+    {
+      "id": "ggp2cwzq",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Nueva subtarea",
       "assignee": "",
       "startDate": "2026-07-14",
       "endDate": "2026-07-17",

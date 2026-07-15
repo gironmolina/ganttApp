@@ -10,6 +10,7 @@ import {
   findDateIndex,
   toLocalIso,
   fmtShort,
+  computeProgress,
 } from "@/lib/gantt-utils";
 
 export function GanttChart({
@@ -116,21 +117,52 @@ export function GanttChart({
           </div>
 
           {order.map((task, rowIdx) => {
-            const startIdx = findDateIndex(task.startDate, "start", workdays, dateToIndex);
-            const endIdx = findDateIndex(task.endDate, "end", workdays, dateToIndex);
-            const from = Math.min(startIdx, endIdx);
-            const to = Math.max(startIdx, endIdx);
-            const left = from * COL_WIDTH;
-            const width = Math.max(COL_WIDTH * 0.6, (to - from + 1) * COL_WIDTH - 2);
+            const progress = computeProgress(task);
+            const hasActual = !!(task.actualStartDate && task.actualEndDate);
+            const hasPlanned = !!(task.startDate && task.endDate);
             const isParent = tasks.some((t) => t.parentId === task.id);
-            const barColor =
-              task.progress >= 100
+            const barBgColor =
+              progress >= 100
                 ? "bg-[var(--status-complete)]"
                 : task.block === "total"
                   ? "bg-[var(--status-blocked)]"
                   : task.block === "partial"
                     ? "bg-[var(--status-partial)]"
                     : "bg-[var(--status-progress)]";
+            const barBorderDashColor =
+              progress >= 100
+                ? "border-[var(--status-complete)] text-[var(--status-complete)]"
+                : task.block === "total"
+                  ? "border-[var(--status-blocked)] text-[var(--status-blocked)]"
+                  : task.block === "partial"
+                    ? "border-[var(--status-partial)] text-[var(--status-partial)]"
+                    : "border-[var(--status-progress)] text-[var(--status-progress)]";
+
+            let pLeft = 0,
+              pWidth = 0;
+            if (hasPlanned) {
+              const sIdx = findDateIndex(task.startDate!, "start", workdays, dateToIndex);
+              const eIdx = findDateIndex(task.endDate!, "end", workdays, dateToIndex);
+              const from = Math.min(sIdx, eIdx);
+              const to = Math.max(sIdx, eIdx);
+              pLeft = from * COL_WIDTH;
+              pWidth = Math.max(COL_WIDTH * 0.6, (to - from + 1) * COL_WIDTH - 2);
+            }
+            let aLeft = 0,
+              aWidth = 0;
+            if (hasActual) {
+              const aStartIdx = findDateIndex(
+                task.actualStartDate!,
+                "start",
+                workdays,
+                dateToIndex,
+              );
+              const aEndIdx = findDateIndex(task.actualEndDate!, "end", workdays, dateToIndex);
+              const aFrom = Math.min(aStartIdx, aEndIdx);
+              const aTo = Math.max(aStartIdx, aEndIdx);
+              aLeft = aFrom * COL_WIDTH;
+              aWidth = Math.max(COL_WIDTH * 0.6, (aTo - aFrom + 1) * COL_WIDTH - 2);
+            }
 
             return (
               <div
@@ -156,24 +188,53 @@ export function GanttChart({
                   ))}
                 </div>
 
-                <button
-                  onClick={() => onSelect(task.id)}
-                  className={cn(
-                    "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden rounded-md text-left text-xs text-white shadow-sm transition hover:brightness-110",
-                    barColor,
-                    isParent && "opacity-90 ring-1 ring-white/30",
-                  )}
-                  style={{ left, width, height: 22 }}
-                  title={`${task.title} • ${fmtShort(workdays[from])} → ${fmtShort(workdays[to])}`}
-                >
+                {hasActual && hasPlanned && !(aLeft === pLeft && aWidth === pWidth) && (
                   <div
-                    className="absolute inset-y-0 left-0 bg-black/25"
-                    style={{ width: `${task.progress}%` }}
+                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded-md border-2 border-dashed bg-transparent border-black"
+                    style={{ left: pLeft, width: pWidth, height: 22, zIndex: 2 }}
                   />
-                  <span className="relative z-10 truncate px-2 font-medium">
-                    {task.title} · {task.progress}%
-                  </span>
-                </button>
+                )}
+
+                {hasActual ? (
+                  <button
+                    onClick={() => onSelect(task.id)}
+                    className={cn(
+                      "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden rounded-md text-left text-xs text-white shadow-sm transition hover:brightness-110",
+                      barBgColor,
+                      isParent && "opacity-90 ring-1 ring-white/30",
+                    )}
+                    style={{ left: aLeft, width: aWidth, height: 22, zIndex: 1 }}
+                    title={`Real: ${task.title} · ${progress}%${hasPlanned ? ` · Plan: ${task.startDate} → ${task.endDate}` : ""}`}
+                  >
+                    <div
+                      className="absolute inset-y-0 left-0 bg-black/25"
+                      style={{ width: `${progress}%` }}
+                    />
+                    <span className="relative z-10 truncate px-2 font-medium">
+                      {task.title} · {progress}%
+                    </span>
+                  </button>
+                ) : hasPlanned ? (
+                  <div
+                    onClick={() => onSelect(task.id)}
+                    className={cn(
+                      "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden rounded-md border-2 border-dashed bg-transparent text-left text-xs transition hover:brightness-110",
+                      barBorderDashColor,
+                      isParent && "opacity-90",
+                    )}
+                    style={{ left: pLeft, width: pWidth, height: 22 }}
+                    title={`${task.title} · ${task.startDate} → ${task.endDate}`}
+                  >
+                    <span className="relative z-10 truncate px-2 font-medium">{task.title}</span>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => onSelect(task.id)}
+                    className="absolute top-1/2 -translate-y-1/2 cursor-pointer text-xs text-muted-foreground"
+                  >
+                    <span className="px-2">{task.title}</span>
+                  </div>
+                )}
               </div>
             );
           })}

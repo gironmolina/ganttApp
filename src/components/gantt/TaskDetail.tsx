@@ -15,18 +15,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, MessageSquarePlus, Plus } from "lucide-react";
+import { Trash2, MessageSquarePlus, Plus, CalendarIcon } from "lucide-react";
 
 export function TaskDetail({
   task,
   allTasks,
   onClose,
   onAddSubtask,
+  projectStartDate,
 }: {
   task: Task;
   allTasks: Task[];
   onClose: () => void;
   onAddSubtask: (parentId: string) => void;
+  projectStartDate?: string;
 }) {
   const [commentAuthor, setCommentAuthor] = useState("");
   const [commentText, setCommentText] = useState("");
@@ -60,16 +62,36 @@ export function TaskDetail({
       </div>
 
       <div className="rounded-md border bg-muted/40 p-3">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Fechas planificadas
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Fechas planificadas
+          </div>
+          {(task.startDate || task.endDate) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => store.update(task.id, { startDate: undefined, endDate: undefined })}
+            >
+              Limpiar
+            </Button>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Inicio estimado</Label>
             <DatePicker
-              value={task.startDate}
-              min={parent?.startDate}
-              onChange={(v) => store.update(task.id, { startDate: v })}
+              value={task.startDate ?? ""}
+              min={parent?.startDate ?? projectStartDate}
+              onChange={(v) => {
+                const patch: Partial<Task> = { startDate: v || undefined };
+                if (!v && task.endDate) {
+                  patch.endDate = undefined;
+                }
+                if (v && task.endDate && task.endDate < v) {
+                  patch.endDate = undefined;
+                }
+                store.update(task.id, patch);
+              }}
             />
             {parent && (
               <p className="mt-1 text-[10px] text-muted-foreground">
@@ -79,11 +101,23 @@ export function TaskDetail({
           </div>
           <div>
             <Label>Fin estimado</Label>
-            <DatePicker
-              value={task.endDate}
-              min={task.startDate}
-              onChange={(v) => store.update(task.id, { endDate: v })}
-            />
+            {task.startDate ? (
+              <DatePicker
+                value={task.endDate ?? ""}
+                min={task.startDate}
+                focusMonth={task.startDate}
+                onChange={(v) => store.update(task.id, { endDate: v || undefined })}
+              />
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full justify-start font-normal text-muted-foreground"
+                disabled
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Primero indica inicio
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -112,16 +146,38 @@ export function TaskDetail({
             <Label>Inicio real</Label>
             <DatePicker
               value={task.actualStartDate ?? ""}
-              onChange={(v) => store.update(task.id, { actualStartDate: v || undefined })}
+              min={task.startDate}
+              onChange={(v) => {
+                const patch: Partial<Task> = { actualStartDate: v || undefined };
+                if (!v && task.actualEndDate) {
+                  patch.actualEndDate = undefined;
+                }
+                if (v && task.actualEndDate && task.actualEndDate < v) {
+                  patch.actualEndDate = undefined;
+                }
+                store.update(task.id, patch);
+              }}
             />
           </div>
           <div>
             <Label>Fin real</Label>
-            <DatePicker
-              value={task.actualEndDate ?? ""}
-              min={task.actualStartDate}
-              onChange={(v) => store.update(task.id, { actualEndDate: v || undefined })}
-            />
+            {task.actualStartDate ? (
+              <DatePicker
+                value={task.actualEndDate ?? ""}
+                min={task.actualStartDate}
+                focusMonth={task.actualStartDate}
+                onChange={(v) => store.update(task.id, { actualEndDate: v || undefined })}
+              />
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full justify-start font-normal text-muted-foreground"
+                disabled
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Primero indica inicio
+              </Button>
+            )}
           </div>
         </div>
         <p className="mt-2 text-[10px] text-muted-foreground">

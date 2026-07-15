@@ -81,8 +81,8 @@ function Index() {
       let mn = Infinity;
       let mx = -Infinity;
       for (const t of tasks) {
-        mn = Math.min(mn, parse(t.startDate).getTime());
-        mx = Math.max(mx, parse(t.endDate).getTime());
+        if (t.startDate) mn = Math.min(mn, parse(t.startDate).getTime());
+        if (t.endDate) mx = Math.max(mx, parse(t.endDate).getTime());
       }
       const days = Math.round((mx - mn) / 86400000) + 1;
       let workdays = 0;
@@ -214,6 +214,7 @@ function Index() {
             allTasks={tasks}
             onClose={() => setSelectedId(null)}
             onAddSubtask={(pid) => addTask(pid)}
+            projectStartDate={settings.startDate}
           />
         </aside>
       )}
