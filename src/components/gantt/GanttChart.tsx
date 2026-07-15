@@ -122,8 +122,7 @@ export function GanttChart({
             const hasEstimated = !!(task.estimatedStartDate && task.estimatedEndDate);
             const hasInitial = !!(task.initialStartDate && task.initialEndDate);
             const isParent = tasks.some((t) => t.parentId === task.id);
-            const barBgColor =
-              progress >= 100 ? "bg-[var(--status-complete)]" : "bg-[var(--status-progress)]";
+            const barBgColor = "bg-[var(--status-progress)]";
 
             // Initial bar positions
             let iLeft = 0,
