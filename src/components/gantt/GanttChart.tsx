@@ -210,10 +210,6 @@ export function GanttChart({
                       style={{ left: normalLeft, width: normalWidth, height: 22, zIndex: 1 }}
                       title={`Real: ${task.title} · ${progress}%${hasPlanned ? ` · Plan: ${task.startDate} → ${task.endDate}` : ""}`}
                     >
-                      <div
-                        className="absolute inset-y-0 left-0 bg-black/25"
-                        style={{ width: `${progress}%` }}
-                      />
                       <span className="relative z-10 truncate px-2 font-medium">
                         {task.title} · {progress}%
                       </span>
@@ -251,7 +247,7 @@ export function GanttChart({
                         style={{ left: barL, width: fillW, height: 22, zIndex: 3 }}
                       >
                         <div
-                          className="border-2 border-solid border-[var(--status-complete)]"
+                          className="border-[3px] border-solid border-[var(--status-complete)]"
                           style={{ width: barW, height: 22 }}
                         />
                       </div>
