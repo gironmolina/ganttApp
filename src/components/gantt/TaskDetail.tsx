@@ -141,45 +141,51 @@ export function TaskDetail({
             </Button>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Inicio real</Label>
-            <DatePicker
-              value={task.actualStartDate ?? ""}
-              min={task.startDate}
-              onChange={(v) => {
-                const patch: Partial<Task> = { actualStartDate: v || undefined };
-                if (!v && task.actualEndDate) {
-                  patch.actualEndDate = undefined;
-                }
-                if (v && task.actualEndDate && task.actualEndDate < v) {
-                  patch.actualEndDate = undefined;
-                }
-                store.update(task.id, patch);
-              }}
-            />
-          </div>
-          <div>
-            <Label>Fin real</Label>
-            {task.actualStartDate ? (
+        {!task.startDate || !task.endDate ? (
+          <p className="py-2 text-xs text-muted-foreground">
+            Primero define las fechas planificadas.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Inicio real</Label>
               <DatePicker
-                value={task.actualEndDate ?? ""}
-                min={task.actualStartDate}
-                focusMonth={task.actualStartDate}
-                onChange={(v) => store.update(task.id, { actualEndDate: v || undefined })}
+                value={task.actualStartDate ?? ""}
+                min={task.startDate}
+                onChange={(v) => {
+                  const patch: Partial<Task> = { actualStartDate: v || undefined };
+                  if (!v && task.actualEndDate) {
+                    patch.actualEndDate = undefined;
+                  }
+                  if (v && task.actualEndDate && task.actualEndDate < v) {
+                    patch.actualEndDate = undefined;
+                  }
+                  store.update(task.id, patch);
+                }}
               />
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full justify-start font-normal text-muted-foreground"
-                disabled
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                Primero indica inicio
-              </Button>
-            )}
+            </div>
+            <div>
+              <Label>Fin real</Label>
+              {task.actualStartDate ? (
+                <DatePicker
+                  value={task.actualEndDate ?? ""}
+                  min={task.actualStartDate}
+                  focusMonth={task.actualStartDate}
+                  onChange={(v) => store.update(task.id, { actualEndDate: v || undefined })}
+                />
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full justify-start font-normal text-muted-foreground"
+                  disabled
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  Primero indica inicio
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
         <p className="mt-2 text-[10px] text-muted-foreground">
           Se registran cuando la tarea comienza o termina realmente.
         </p>
