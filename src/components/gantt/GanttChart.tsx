@@ -191,51 +191,34 @@ export function GanttChart({
                   ))}
                 </div>
 
-                {hasActual && hasPlanned && !(aLeft === pLeft && aWidth === pWidth) && (
+                {/* Actual bar — zIndex 1 */}
+                {hasActual && (
+                  <button
+                    onClick={() => onSelect(task.id)}
+                    className={cn(
+                      "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden text-left text-xs text-white shadow-sm transition hover:brightness-110",
+                      barBgColor,
+                      isParent && "opacity-90 ring-1 ring-white/30",
+                    )}
+                    style={{ left: normalLeft, width: normalWidth, height: 22, zIndex: 1 }}
+                    title={`Real: ${task.title} · ${progress}%${hasPlanned ? ` · Plan: ${task.startDate} → ${task.endDate}` : ""}`}
+                  >
+                    <span className="relative z-10 truncate px-2 font-medium">
+                      {task.title} · {progress}%
+                    </span>
+                  </button>
+                )}
+
+                {/* Delayed segment — zIndex 1 */}
+                {hasActual && isDelayed && delayWidth > 0 && (
                   <div
-                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-dashed bg-transparent border-black/60"
-                    style={{ left: pLeft, width: pWidth, height: 22, zIndex: 2 }}
+                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 bg-[var(--status-delayed)]"
+                    style={{ left: delayLeft, width: delayWidth, height: 22, zIndex: 1 }}
+                    title={`Retraso: ${task.endDate} → ${task.actualEndDate}`}
                   />
                 )}
 
-                {hasActual ? (
-                  <>
-                    <button
-                      onClick={() => onSelect(task.id)}
-                      className={cn(
-                        "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden text-left text-xs text-white shadow-sm transition hover:brightness-110",
-                        barBgColor,
-                        isParent && "opacity-90 ring-1 ring-white/30",
-                      )}
-                      style={{ left: normalLeft, width: normalWidth, height: 22, zIndex: 1 }}
-                      title={`Real: ${task.title} · ${progress}%${hasPlanned ? ` · Plan: ${task.startDate} → ${task.endDate}` : ""}`}
-                    >
-                      <span className="relative z-10 truncate px-2 font-medium">
-                        {task.title} · {progress}%
-                      </span>
-                    </button>
-                    {isDelayed && delayWidth > 0 && (
-                      <div
-                        className="absolute top-1/2 -translate-y-1/2 bg-[var(--status-delayed)]"
-                        style={{ left: delayLeft, width: delayWidth, height: 22, zIndex: 1 }}
-                        title={`Retraso: ${task.endDate} → ${task.actualEndDate}`}
-                      />
-                    )}
-                  </>
-                ) : hasPlanned ? (
-                  <div
-                    onClick={() => onSelect(task.id)}
-                    className={cn(
-                      "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden border-2 border-dashed bg-transparent border-black/60 text-left text-xs transition hover:brightness-110",
-                      isParent && "opacity-90",
-                    )}
-                    style={{ left: pLeft, width: pWidth, height: 22 }}
-                    title={`${task.title} · ${task.startDate} → ${task.endDate}`}
-                  >
-                    <span className="relative z-10 truncate px-2 font-medium">{task.title}</span>
-                  </div>
-                ) : null}
-
+                {/* Progress border overlay — zIndex 3 */}
                 {progress > 0 &&
                   (() => {
                     const barL = hasActual ? aLeft : pLeft;
@@ -247,12 +230,33 @@ export function GanttChart({
                         style={{ left: barL, width: fillW, height: 22, zIndex: 3 }}
                       >
                         <div
-                          className="border-[3px] border-solid border-[var(--status-complete)]"
+                          className="h-full border-[3px] border-solid border-[var(--status-complete)]"
                           style={{ width: barW, height: 22 }}
                         />
                       </div>
                     );
                   })()}
+
+                {/* Planned bar — always visible, zIndex 4 */}
+                {hasPlanned &&
+                  (hasActual ? (
+                    <div
+                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-dashed bg-transparent border-black/60"
+                      style={{ left: pLeft, width: pWidth, height: 22, zIndex: 4 }}
+                    />
+                  ) : (
+                    <div
+                      onClick={() => onSelect(task.id)}
+                      className={cn(
+                        "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden border-2 border-dashed bg-transparent border-black/60 text-left text-xs transition hover:brightness-110",
+                        isParent && "opacity-90",
+                      )}
+                      style={{ left: pLeft, width: pWidth, height: 22, zIndex: 4 }}
+                      title={`${task.title} · ${task.startDate} → ${task.endDate}`}
+                    >
+                      <span className="relative z-10 truncate px-2 font-medium">{task.title}</span>
+                    </div>
+                  ))}
               </div>
             );
           })}
