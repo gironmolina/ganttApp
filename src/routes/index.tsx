@@ -64,7 +64,7 @@ function Index() {
   const stats = useMemo(() => {
     const total = tasks.length;
     const done = tasks.filter((t) => t.progress >= 100).length;
-    const blocked = tasks.filter((t) => t.block !== "none" && t.progress < 100).length;
+    const blocked = tasks.filter((t) => t.blocks.length > 0 && t.progress < 100).length;
     const avg = total ? Math.round(tasks.reduce((s, t) => s + t.progress, 0) / total) : 0;
     let duration: {
       days: number;

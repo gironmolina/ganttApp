@@ -18,7 +18,7 @@ describe("gantt-store", () => {
       expect(t.title).toBe("Nueva tarea");
       expect(t.parentId).toBeNull();
       expect(t.progress).toBe(0);
-      expect(t.block).toBe("none");
+      expect(t.blocks).toEqual([]);
       expect(t.comments).toEqual([]);
       expect(t.id).toBeTruthy();
     });
@@ -46,13 +46,21 @@ describe("gantt-store", () => {
         title: "Custom",
         assignee: "John",
         progress: 50,
-        block: "partial",
-        blockReason: "Waiting",
+        blocks: [
+          {
+            id: "b1",
+            type: "partial",
+            reason: "Waiting",
+            startDate: "2026-03-01",
+            endDate: "2026-03-05",
+          },
+        ],
       });
       expect(t.assignee).toBe("John");
       expect(t.progress).toBe(50);
-      expect(t.block).toBe("partial");
-      expect(t.blockReason).toBe("Waiting");
+      expect(t.blocks).toHaveLength(1);
+      expect(t.blocks[0].type).toBe("partial");
+      expect(t.blocks[0].reason).toBe("Waiting");
     });
   });
 

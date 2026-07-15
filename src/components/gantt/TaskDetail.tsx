@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { store, type Task, type BlockStatus } from "@/lib/gantt-store";
+import { store, type Task, type BlockRange } from "@/lib/gantt-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -279,29 +279,128 @@ export function TaskDetail({
         </div>
       </div>
 
-      <div>
-        <Label>Estado de bloqueo</Label>
-        <Select
-          value={task.block}
-          onValueChange={(v) => store.update(task.id, { block: v as BlockStatus })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Sin bloqueo</SelectItem>
-            <SelectItem value="partial">Bloqueo parcial</SelectItem>
-            <SelectItem value="total">Bloqueo total</SelectItem>
-          </SelectContent>
-        </Select>
-        {task.block !== "none" && (
-          <Textarea
-            className="mt-2"
-            placeholder="Motivo del bloqueo"
-            value={task.blockReason ?? ""}
-            onChange={(e) => store.update(task.id, { blockReason: e.target.value })}
-          />
+      <div className="rounded-md border p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Bloqueos
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const uid = Math.random().toString(36).slice(2, 10);
+              const defaultStart = task.estimatedStartDate ?? task.initialStartDate ?? "";
+              store.update(task.id, {
+                blocks: [
+                  ...task.blocks,
+                  { id: uid, type: "partial", startDate: defaultStart, endDate: defaultStart },
+                ],
+              });
+            }}
+          >
+            <Plus className="mr-1 h-3 w-3" /> Añadir
+          </Button>
+        </div>
+        {task.blocks.length === 0 && (
+          <p className="text-xs text-muted-foreground">Sin bloqueos registrados.</p>
         )}
+        <div className="space-y-3">
+          {task.blocks.map((block) => (
+            <div key={block.id} className="space-y-2 rounded border bg-muted/30 p-2">
+              <div className="flex items-center gap-2">
+                <Select
+                  value={block.type}
+                  onValueChange={(v) => {
+                    store.update(task.id, {
+                      blocks: task.blocks.map((b) =>
+                        b.id === block.id ? { ...b, type: v as "partial" | "total" } : b,
+                      ),
+                    });
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="partial">Parcial</SelectItem>
+                    <SelectItem value="total">Total</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto h-8 w-8 p-0"
+                  onClick={() =>
+                    store.update(task.id, {
+                      blocks: task.blocks.filter((b) => b.id !== block.id),
+                    })
+                  }
+                >
+                  ×
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px]">Inicio bloqueo</Label>
+                  <DatePicker
+                    value={block.startDate}
+                    min={task.estimatedStartDate ?? task.initialStartDate ?? projectStartDate}
+                    onChange={(v) => {
+                      store.update(task.id, {
+                        blocks: task.blocks.map((b) =>
+                          b.id === block.id
+                            ? {
+                                ...b,
+                                startDate: v,
+                                endDate: v && b.endDate && b.endDate < v ? v : b.endDate,
+                              }
+                            : b,
+                        ),
+                      });
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px]">Fin bloqueo</Label>
+                  {block.startDate ? (
+                    <DatePicker
+                      value={block.endDate}
+                      min={block.startDate}
+                      focusMonth={block.startDate}
+                      onChange={(v) => {
+                        store.update(task.id, {
+                          blocks: task.blocks.map((b) =>
+                            b.id === block.id ? { ...b, endDate: v } : b,
+                          ),
+                        });
+                      }}
+                    />
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start font-normal text-muted-foreground"
+                      disabled
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Primero indica inicio
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <Input
+                placeholder="Motivo del bloqueo (opcional)"
+                value={block.reason ?? ""}
+                onChange={(e) => {
+                  store.update(task.id, {
+                    blocks: task.blocks.map((b) =>
+                      b.id === block.id ? { ...b, reason: e.target.value || undefined } : b,
+                    ),
+                  });
+                }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="rounded-md border p-3">

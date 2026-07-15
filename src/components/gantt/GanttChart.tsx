@@ -123,13 +123,7 @@ export function GanttChart({
             const hasInitial = !!(task.initialStartDate && task.initialEndDate);
             const isParent = tasks.some((t) => t.parentId === task.id);
             const barBgColor =
-              progress >= 100
-                ? "bg-[var(--status-complete)]"
-                : task.block === "total"
-                  ? "bg-[var(--status-blocked)]"
-                  : task.block === "partial"
-                    ? "bg-[var(--status-partial)]"
-                    : "bg-[var(--status-progress)]";
+              progress >= 100 ? "bg-[var(--status-complete)]" : "bg-[var(--status-progress)]";
 
             // Initial bar positions
             let iLeft = 0,
@@ -233,11 +227,7 @@ export function GanttChart({
                     )}
                     style={{ left: normalLeft, width: normalWidth, height: 22, zIndex: 1 }}
                     title={`Real: ${task.title} · ${progress}%${hasEstimated ? ` · Estimada: ${task.estimatedStartDate} → ${task.estimatedEndDate}` : ""}`}
-                  >
-                    <span className="relative z-10 truncate px-2 font-medium">
-                      {task.title} · {progress}%
-                    </span>
-                  </button>
+                  />
                 )}
 
                 {/* Delayed segment — zIndex 1 */}
@@ -254,6 +244,36 @@ export function GanttChart({
                   />
                 )}
 
+                {/* Block range lines — zIndex 2 */}
+                {task.blocks.map((block) => {
+                  const bStartIdx = findDateIndex(block.startDate, "start", workdays, dateToIndex);
+                  const bEndIdx = findDateIndex(block.endDate, "end", workdays, dateToIndex);
+                  const bFrom = Math.min(bStartIdx, bEndIdx);
+                  const bTo = Math.max(bStartIdx, bEndIdx);
+                  const bLeft = bFrom * COL_WIDTH;
+                  const bWidth = Math.max(2, (bTo - bFrom + 1) * COL_WIDTH - 2);
+                  const isTotal = block.type === "total";
+                  return (
+                    <div
+                      key={block.id}
+                      className={cn(
+                        "pointer-events-none absolute top-1/2 -translate-y-1/2 border-l-2 border-r-2 border-[var(--status-blocked)]",
+                        isTotal && "bg-[var(--status-blocked)]/30",
+                      )}
+                      style={{
+                        left: bLeft,
+                        width: bWidth,
+                        height: 22,
+                        zIndex: 2,
+                        ...(!isTotal && {
+                          backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 4px, var(--status-blocked) 4px, var(--status-blocked) 5.5px)`,
+                        }),
+                      }}
+                      title={`${isTotal ? "Bloqueo total" : "Bloqueo parcial"}${block.reason ? `: ${block.reason}` : ""} · ${block.startDate} → ${block.endDate}`}
+                    />
+                  );
+                })}
+
                 {/* Progress border overlay — zIndex 3 */}
                 {progress > 0 &&
                   (() => {
@@ -263,7 +283,7 @@ export function GanttChart({
                     return (
                       <div
                         className="pointer-events-none absolute top-1/2 -translate-y-1/2 overflow-hidden"
-                        style={{ left: barL, width: fillW, height: 22, zIndex: 3 }}
+                        style={{ left: barL, width: fillW, height: 22, zIndex: 8 }}
                       >
                         <div
                           className="h-full border-[3px] border-solid border-[var(--status-complete)]"
@@ -289,9 +309,7 @@ export function GanttChart({
                       )}
                       style={{ left: eLeft, width: eWidth, height: 22, zIndex: 4 }}
                       title={`${task.title} · Estimada: ${task.estimatedStartDate} → ${task.estimatedEndDate}`}
-                    >
-                      <span className="relative z-10 truncate px-2 font-medium">{task.title}</span>
-                    </div>
+                    />
                   ))}
 
                 {/* Initial bar — zIndex 5, dashed black */}
@@ -327,6 +345,29 @@ export function GanttChart({
                     />
                   </svg>
                 )}
+
+                {/* Task label — zIndex 7, always on top */}
+                {(() => {
+                  const textLeft = hasActual ? aLeft : hasEstimated ? eLeft : iLeft;
+                  const textWidth = hasActual ? aWidth : hasEstimated ? eWidth : iWidth;
+                  if (!textWidth) return null;
+                  return (
+                    <div
+                      className="pointer-events-none absolute top-0 flex items-center overflow-hidden text-left text-xs font-medium text-white"
+                      style={{
+                        left: textLeft,
+                        width: textWidth,
+                        height: ROW_HEIGHT,
+                        zIndex: 9,
+                        textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+                      }}
+                    >
+                      <span className="truncate px-2">
+                        {task.title} · {progress}%
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}

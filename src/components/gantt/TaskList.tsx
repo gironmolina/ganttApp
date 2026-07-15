@@ -279,11 +279,11 @@ function StatusIcon({ task }: { task: Task }) {
     return (
       <CheckCircle2 className="h-4 w-4 text-[var(--status-complete)]" aria-label="Completada" />
     );
-  if (task.block === "total")
+  if (task.blocks.some((b) => b.type === "total"))
     return (
       <AlertOctagon className="h-4 w-4 text-[var(--status-blocked)]" aria-label="Bloqueo total" />
     );
-  if (task.block === "partial")
+  if (task.blocks.some((b) => b.type === "partial"))
     return (
       <AlertTriangle
         className="h-4 w-4 text-[var(--status-partial)]"

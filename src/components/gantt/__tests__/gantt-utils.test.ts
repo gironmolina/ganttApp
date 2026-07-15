@@ -23,7 +23,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     initialStartDate: "2026-05-01",
     initialEndDate: "2026-05-15",
     progress: 0,
-    block: "none",
+    blocks: [],
     comments: [],
     createdAt: "2026-05-01",
     ...overrides,

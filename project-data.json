@@ -6,7 +6,6 @@
       "title": "Discovery",
       "assignee": "Plain Concepts",
       "progress": 100,
-      "block": "none",
       "comments": [],
       "createdAt": "2026-07-14",
       "position": 0,
@@ -15,7 +14,8 @@
       "estimatedStartDate": "2026-05-04",
       "estimatedEndDate": "2026-06-01",
       "actualStartDate": "2026-05-04",
-      "actualEndDate": "2026-06-12"
+      "actualEndDate": "2026-06-12",
+      "blocks": []
     },
     {
       "id": "if8824yl",
@@ -27,12 +27,12 @@
       "estimatedStartDate": "2026-05-18",
       "estimatedEndDate": "2026-06-12",
       "progress": 100,
-      "block": "none",
       "comments": [],
       "createdAt": "2026-07-14",
       "position": 1,
       "actualStartDate": "2026-05-18",
-      "actualEndDate": "2026-06-04"
+      "actualEndDate": "2026-06-04",
+      "blocks": []
     },
     {
       "id": "9krl573f",
@@ -44,11 +44,11 @@
       "estimatedStartDate": "2026-06-15",
       "estimatedEndDate": "2026-06-19",
       "progress": 100,
-      "block": "none",
       "comments": [],
       "createdAt": "2026-07-14",
       "actualStartDate": "2026-06-15",
-      "actualEndDate": "2026-06-19"
+      "actualEndDate": "2026-06-19",
+      "blocks": []
     },
     {
       "id": "jms1no60",
@@ -59,12 +59,49 @@
       "initialEndDate": "2026-06-30",
       "estimatedStartDate": "2026-06-22",
       "estimatedEndDate": "2026-06-30",
-      "progress": 0,
-      "block": "none",
+      "progress": 95,
       "comments": [],
       "createdAt": "2026-07-14",
       "actualStartDate": "2026-06-22",
-      "actualEndDate": "2026-07-10"
+      "actualEndDate": "2026-07-10",
+      "blocks": [
+        {
+          "id": "9759b30x",
+          "type": "partial",
+          "startDate": "2026-06-22",
+          "endDate": "2026-07-02"
+        },
+        {
+          "id": "i8yd8z7e",
+          "type": "partial",
+          "startDate": "2026-07-10",
+          "endDate": "2026-07-10"
+        }
+      ]
+    },
+    {
+      "id": "f0p37h0z",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Integración Amdocs y Lowi",
+      "assignee": "",
+      "initialStartDate": "2026-07-01",
+      "initialEndDate": "2026-07-07",
+      "estimatedStartDate": "2026-07-08",
+      "estimatedEndDate": "2026-07-16",
+      "progress": 0,
+      "blocks": [
+        {
+          "id": "l25m1ulm",
+          "type": "total",
+          "startDate": "2026-07-08",
+          "endDate": "2026-07-08"
+        }
+      ],
+      "comments": [],
+      "createdAt": "2026-07-15",
+      "actualStartDate": "2026-07-08",
+      "actualEndDate": "2026-07-23"
     }
   ],
   "settings": {

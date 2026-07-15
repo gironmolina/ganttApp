@@ -1,7 +1,15 @@
 import { useSyncExternalStore } from "react";
 import { getProjectData, mergeProjectData } from "./json-persist";
 
-export type BlockStatus = "none" | "partial" | "total";
+export type BlockType = "partial" | "total";
+
+export interface BlockRange {
+  id: string;
+  type: BlockType;
+  reason?: string;
+  startDate: string;
+  endDate: string;
+}
 
 export interface Comment {
   id: string;
@@ -23,13 +31,12 @@ export interface Task {
   actualStartDate?: string;
   actualEndDate?: string;
   progress: number;
-  block: BlockStatus;
-  blockReason?: string;
+  blocks: BlockRange[];
   comments: Comment[];
   createdAt: string;
 }
 
-const STORAGE_KEY = "gantt-tasks-v2";
+const STORAGE_KEY = "gantt-tasks-v3";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -56,7 +63,7 @@ function seed(): Task[] {
       estimatedStartDate: t,
       estimatedEndDate: addDays(t, 6),
       progress: 60,
-      block: "none",
+      blocks: [],
       comments: [],
       createdAt: t,
     },
@@ -71,7 +78,7 @@ function seed(): Task[] {
       estimatedStartDate: t,
       estimatedEndDate: addDays(t, 2),
       progress: 100,
-      block: "none",
+      blocks: [],
       comments: [],
       createdAt: t,
     },
@@ -88,8 +95,15 @@ function seed(): Task[] {
       actualStartDate: addDays(t, 4),
       actualEndDate: addDays(t, 7),
       progress: 40,
-      block: "partial",
-      blockReason: "Esperando disponibilidad de cliente",
+      blocks: [
+        {
+          id: uid(),
+          type: "partial",
+          reason: "Esperando disponibilidad de cliente",
+          startDate: addDays(t, 4),
+          endDate: addDays(t, 5),
+        },
+      ],
       comments: [],
       createdAt: t,
     },
@@ -104,7 +118,7 @@ function seed(): Task[] {
       estimatedStartDate: addDays(t, 7),
       estimatedEndDate: addDays(t, 21),
       progress: 10,
-      block: "none",
+      blocks: [],
       comments: [],
       createdAt: t,
     },
@@ -119,7 +133,7 @@ function seed(): Task[] {
       estimatedStartDate: addDays(t, 7),
       estimatedEndDate: addDays(t, 12),
       progress: 30,
-      block: "none",
+      blocks: [],
       comments: [],
       createdAt: t,
     },
@@ -163,21 +177,52 @@ function ensurePositions(taskList: Task[]): Task[] {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function migrateTasks(taskList: any[]): Task[] {
   return taskList.map((t) => {
+    let migrated = { ...t };
+
+    // v1 -> v2: startDate/endDate -> initialStartDate/initialEndDate
     if (t.startDate !== undefined && t.initialStartDate === undefined) {
-      const { startDate, endDate, ...rest } = t;
-      return {
+      const { startDate, endDate, ...rest } = migrated;
+      migrated = {
         ...rest,
         initialStartDate: startDate || undefined,
         initialEndDate: endDate || undefined,
-      } as Task;
+      };
     }
-    return t as Task;
+
+    // v2 -> v3: block + blockReason -> blocks array
+    if (t.blocks === undefined && t.block !== undefined) {
+      const rangeStart =
+        migrated.estimatedStartDate || migrated.initialStartDate || migrated.startDate;
+      const rangeEnd = migrated.estimatedEndDate || migrated.initialEndDate || migrated.endDate;
+      if (t.block !== "none" && rangeStart && rangeEnd) {
+        migrated.blocks = [
+          {
+            id: uid(),
+            type: t.block,
+            reason: t.blockReason || undefined,
+            startDate: rangeStart,
+            endDate: rangeEnd,
+          },
+        ];
+      } else {
+        migrated.blocks = [];
+      }
+      delete migrated.block;
+      delete migrated.blockReason;
+    }
+
+    if (!migrated.blocks) {
+      migrated.blocks = [];
+    }
+
+    return migrated as Task;
   });
 }
 
 function loadFromLocalStorage(): Task[] {
   if (typeof window === "undefined") return [];
   try {
+    // Try v3 first
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       const s = seed();
@@ -267,8 +312,7 @@ export const store = {
           ? partial.estimatedStartDate
           : partial.estimatedEndDate || undefined,
       progress: partial.progress ?? 0,
-      block: partial.block ?? "none",
-      blockReason: partial.blockReason,
+      blocks: partial.blocks ?? [],
       comments: [],
       createdAt: t,
     };
