@@ -129,14 +129,6 @@ export function GanttChart({
                   : task.block === "partial"
                     ? "bg-[var(--status-partial)]"
                     : "bg-[var(--status-progress)]";
-            const barBorderDashColor =
-              progress >= 100
-                ? "border-[var(--status-complete)] text-[var(--status-complete)]"
-                : task.block === "total"
-                  ? "border-[var(--status-blocked)] text-[var(--status-blocked)]"
-                  : task.block === "partial"
-                    ? "border-[var(--status-partial)] text-[var(--status-partial)]"
-                    : "border-[var(--status-progress)] text-[var(--status-progress)]";
 
             let pLeft = 0,
               pWidth = 0;
@@ -218,8 +210,7 @@ export function GanttChart({
                   <div
                     onClick={() => onSelect(task.id)}
                     className={cn(
-                      "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden rounded-md border-2 border-dashed bg-transparent text-left text-xs transition hover:brightness-110",
-                      barBorderDashColor,
+                      "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden rounded-md border-2 border-dashed bg-transparent border-black/60 text-left text-xs transition hover:brightness-110",
                       isParent && "opacity-90",
                     )}
                     style={{ left: pLeft, width: pWidth, height: 22 }}
