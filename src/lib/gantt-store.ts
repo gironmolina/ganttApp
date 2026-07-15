@@ -16,8 +16,10 @@ export interface Task {
   position: number;
   title: string;
   assignee: string;
-  startDate?: string;
-  endDate?: string;
+  initialStartDate?: string;
+  initialEndDate?: string;
+  estimatedStartDate?: string;
+  estimatedEndDate?: string;
   actualStartDate?: string;
   actualEndDate?: string;
   progress: number;
@@ -27,7 +29,7 @@ export interface Task {
   createdAt: string;
 }
 
-const STORAGE_KEY = "gantt-tasks-v1";
+const STORAGE_KEY = "gantt-tasks-v2";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -49,8 +51,10 @@ function seed(): Task[] {
       position: 0,
       title: "Planificación del proyecto",
       assignee: "Ana Torres",
-      startDate: t,
-      endDate: addDays(t, 6),
+      initialStartDate: t,
+      initialEndDate: addDays(t, 6),
+      estimatedStartDate: t,
+      estimatedEndDate: addDays(t, 6),
       progress: 60,
       block: "none",
       comments: [],
@@ -62,8 +66,10 @@ function seed(): Task[] {
       position: 0,
       title: "Definir alcance",
       assignee: "Ana Torres",
-      startDate: t,
-      endDate: addDays(t, 2),
+      initialStartDate: t,
+      initialEndDate: addDays(t, 2),
+      estimatedStartDate: t,
+      estimatedEndDate: addDays(t, 2),
       progress: 100,
       block: "none",
       comments: [],
@@ -75,8 +81,12 @@ function seed(): Task[] {
       position: 1,
       title: "Kick-off con stakeholders",
       assignee: "Luis Pérez",
-      startDate: addDays(t, 3),
-      endDate: addDays(t, 5),
+      initialStartDate: addDays(t, 3),
+      initialEndDate: addDays(t, 5),
+      estimatedStartDate: addDays(t, 4),
+      estimatedEndDate: addDays(t, 7),
+      actualStartDate: addDays(t, 4),
+      actualEndDate: addDays(t, 7),
       progress: 40,
       block: "partial",
       blockReason: "Esperando disponibilidad de cliente",
@@ -89,8 +99,10 @@ function seed(): Task[] {
       position: 1,
       title: "Desarrollo MVP",
       assignee: "Equipo Dev",
-      startDate: addDays(t, 7),
-      endDate: addDays(t, 21),
+      initialStartDate: addDays(t, 7),
+      initialEndDate: addDays(t, 21),
+      estimatedStartDate: addDays(t, 7),
+      estimatedEndDate: addDays(t, 21),
       progress: 10,
       block: "none",
       comments: [],
@@ -102,8 +114,10 @@ function seed(): Task[] {
       position: 0,
       title: "Diseño UI",
       assignee: "María Gómez",
-      startDate: addDays(t, 7),
-      endDate: addDays(t, 12),
+      initialStartDate: addDays(t, 7),
+      initialEndDate: addDays(t, 12),
+      estimatedStartDate: addDays(t, 7),
+      estimatedEndDate: addDays(t, 12),
       progress: 30,
       block: "none",
       comments: [],
@@ -146,6 +160,21 @@ function ensurePositions(taskList: Task[]): Task[] {
   return taskList.map((t) => ({ ...t, position: positionMap.get(t.id) ?? 0 }));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrateTasks(taskList: any[]): Task[] {
+  return taskList.map((t) => {
+    if (t.startDate !== undefined && t.initialStartDate === undefined) {
+      const { startDate, endDate, ...rest } = t;
+      return {
+        ...rest,
+        initialStartDate: startDate || undefined,
+        initialEndDate: endDate || undefined,
+      } as Task;
+    }
+    return t as Task;
+  });
+}
+
 function loadFromLocalStorage(): Task[] {
   if (typeof window === "undefined") return [];
   try {
@@ -155,7 +184,7 @@ function loadFromLocalStorage(): Task[] {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
       return s;
     }
-    return ensurePositions(JSON.parse(raw));
+    return ensurePositions(migrateTasks(JSON.parse(raw)));
   } catch {
     return [];
   }
@@ -180,7 +209,7 @@ function ensureHydrated() {
     hydrated = true;
     loadFromServer().then((serverTasks) => {
       if (serverTasks !== null) {
-        tasks = serverTasks;
+        tasks = migrateTasks(serverTasks);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
         listeners.forEach((l) => l());
       } else {
@@ -223,11 +252,20 @@ export const store = {
       position: maxPos + 1,
       title: partial.title,
       assignee: partial.assignee ?? "",
-      startDate: partial.startDate || undefined,
-      endDate:
-        partial.endDate && partial.startDate && partial.endDate < partial.startDate
-          ? partial.startDate
-          : partial.endDate || undefined,
+      initialStartDate: partial.initialStartDate || undefined,
+      initialEndDate:
+        partial.initialEndDate &&
+        partial.initialStartDate &&
+        partial.initialEndDate < partial.initialStartDate
+          ? partial.initialStartDate
+          : partial.initialEndDate || undefined,
+      estimatedStartDate: partial.estimatedStartDate || undefined,
+      estimatedEndDate:
+        partial.estimatedEndDate &&
+        partial.estimatedStartDate &&
+        partial.estimatedEndDate < partial.estimatedStartDate
+          ? partial.estimatedStartDate
+          : partial.estimatedEndDate || undefined,
       progress: partial.progress ?? 0,
       block: partial.block ?? "none",
       blockReason: partial.blockReason,
@@ -243,18 +281,26 @@ export const store = {
     if (!target) return;
     const next: Task = { ...target, ...patch };
 
-    if (next.parentId) {
-      const parent = tasks.find((x) => x.id === next.parentId);
-      if (parent?.startDate && next.startDate && next.startDate < parent.startDate) {
-        next.startDate = parent.startDate;
-      }
+    if (!next.initialStartDate && next.initialEndDate) {
+      next.initialEndDate = undefined;
+    }
+    if (
+      next.initialStartDate &&
+      next.initialEndDate &&
+      next.initialEndDate < next.initialStartDate
+    ) {
+      next.initialEndDate = next.initialStartDate;
     }
 
-    if (!next.startDate && next.endDate) {
-      next.endDate = undefined;
+    if (!next.estimatedStartDate && next.estimatedEndDate) {
+      next.estimatedEndDate = undefined;
     }
-    if (next.startDate && next.endDate && next.endDate < next.startDate) {
-      next.endDate = next.startDate;
+    if (
+      next.estimatedStartDate &&
+      next.estimatedEndDate &&
+      next.estimatedEndDate < next.estimatedStartDate
+    ) {
+      next.estimatedEndDate = next.estimatedStartDate;
     }
 
     if (!next.actualStartDate && next.actualEndDate) {
@@ -264,14 +310,32 @@ export const store = {
       next.actualEndDate = next.actualStartDate;
     }
 
+    if (next.parentId) {
+      const parent = tasks.find((x) => x.id === next.parentId);
+      if (
+        parent?.initialStartDate &&
+        next.initialStartDate &&
+        next.initialStartDate < parent.initialStartDate
+      ) {
+        next.initialStartDate = parent.initialStartDate;
+      }
+    }
+
     tasks = tasks.map((x) => (x.id === id ? next : x));
 
-    if (patch.startDate && next.startDate && next.startDate !== target.startDate) {
+    if (
+      patch.initialStartDate &&
+      next.initialStartDate &&
+      next.initialStartDate !== target.initialStartDate
+    ) {
       tasks = tasks.map((x) => {
         if (x.parentId !== id) return x;
-        if (x.startDate && x.startDate < next.startDate!) {
-          const end = !x.endDate || x.endDate < next.startDate! ? next.startDate! : x.endDate;
-          return { ...x, startDate: next.startDate, endDate: end };
+        if (x.initialStartDate && x.initialStartDate < next.initialStartDate!) {
+          const end =
+            !x.initialEndDate || x.initialEndDate < next.initialStartDate!
+              ? next.initialStartDate!
+              : x.initialEndDate;
+          return { ...x, initialStartDate: next.initialStartDate, initialEndDate: end };
         }
         return x;
       });

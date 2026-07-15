@@ -81,8 +81,12 @@ function Index() {
       let mn = Infinity;
       let mx = -Infinity;
       for (const t of tasks) {
-        if (t.startDate) mn = Math.min(mn, parse(t.startDate).getTime());
-        if (t.endDate) mx = Math.max(mx, parse(t.endDate).getTime());
+        if (t.initialStartDate) mn = Math.min(mn, parse(t.initialStartDate).getTime());
+        if (t.initialEndDate) mx = Math.max(mx, parse(t.initialEndDate).getTime());
+        if (t.estimatedStartDate) mn = Math.min(mn, parse(t.estimatedStartDate).getTime());
+        if (t.estimatedEndDate) mx = Math.max(mx, parse(t.estimatedEndDate).getTime());
+        if (t.actualStartDate) mn = Math.min(mn, parse(t.actualStartDate).getTime());
+        if (t.actualEndDate) mx = Math.max(mx, parse(t.actualEndDate).getTime());
       }
       const days = Math.round((mx - mn) / 86400000) + 1;
       let workdays = 0;
@@ -250,13 +254,28 @@ function Legend() {
     { c: "var(--status-partial)", l: "Bloqueo parcial" },
     { c: "var(--status-blocked)", l: "Bloqueo total" },
     { c: "var(--status-delayed)", l: "Retrasado" },
+    { c: "black", l: "Planificación inicial", dash: true },
+    { c: "rgb(156,163,175)", l: "Estimada", dash: true },
+    { c: "var(--today)", l: "Retraso inicio", arrow: true },
     { c: "var(--today)", l: "Hoy" },
   ];
   return (
     <div className="flex h-[40px] flex-wrap items-center gap-3 rounded-md border bg-card px-3 text-xs">
       {items.map((i) => (
         <div key={i.l} className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm" style={{ background: i.c }} />
+          {"arrow" in i ? (
+            <svg width="16" height="12" className="shrink-0">
+              <line x1="0" y1="6" x2="10" y2="6" stroke={i.c} strokeWidth="2" />
+              <polygon points="16,6 10,2 10,10" fill={i.c} />
+            </svg>
+          ) : "dash" in i ? (
+            <span
+              className="h-3 w-3 shrink-0 border-2 border-dashed bg-transparent"
+              style={{ borderColor: i.c }}
+            />
+          ) : (
+            <span className="h-3 w-3 shrink-0 rounded-sm" style={{ background: i.c }} />
+          )}
           <span className="text-muted-foreground">{i.l}</span>
         </div>
       ))}

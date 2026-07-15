@@ -20,8 +20,8 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     position: 0,
     title: "Test",
     assignee: "",
-    startDate: "2026-05-01",
-    endDate: "2026-05-15",
+    initialStartDate: "2026-05-01",
+    initialEndDate: "2026-05-15",
     progress: 0,
     block: "none",
     comments: [],
@@ -124,7 +124,7 @@ describe("skipToWeekday", () => {
 
 describe("buildTimeline", () => {
   it("excludes weekends from workdays", () => {
-    const tasks = [makeTask({ startDate: "2026-05-04", endDate: "2026-05-08" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-04", initialEndDate: "2026-05-08" })];
     const { workdays } = buildTimeline(tasks);
     for (const d of workdays) {
       expect(isWeekend(d)).toBe(false);
@@ -142,14 +142,14 @@ describe("buildTimeline", () => {
 
   it("snaps to Monday when no project dates (auto mode)", () => {
     // May 1, 2026 is Friday — auto mode should snap back to Monday Apr 27
-    const tasks = [makeTask({ startDate: "2026-05-01", endDate: "2026-05-08" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-01", initialEndDate: "2026-05-08" })];
     const { workdays } = buildTimeline(tasks);
     const firstDay = workdays[0];
     expect(firstDay.getDay()).toBe(1); // Monday
   });
 
   it("pads to a full week (multiple of 5)", () => {
-    const tasks = [makeTask({ startDate: "2026-05-01", endDate: "2026-05-15" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-01", initialEndDate: "2026-05-15" })];
     const { workdays } = buildTimeline(tasks, "2026-05-01", "2026-05-15");
     expect(workdays.length % WORKDAYS_PER_WEEK).toBe(0);
   });
@@ -175,7 +175,7 @@ describe("buildTimeline", () => {
 
 describe("buildSprints", () => {
   it("creates sprints grouping two weeks each", () => {
-    const tasks = [makeTask({ startDate: "2026-05-04", endDate: "2026-05-29" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-04", initialEndDate: "2026-05-29" })];
     const { workdays, weekStarts } = buildTimeline(tasks, "2026-05-04", "2026-05-29");
     const sprints = buildSprints(workdays, weekStarts);
     expect(sprints.length).toBeGreaterThanOrEqual(1);
@@ -186,14 +186,14 @@ describe("buildSprints", () => {
   });
 
   it("first sprint starts at workdays[0]", () => {
-    const tasks = [makeTask({ startDate: "2026-05-04", endDate: "2026-05-29" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-04", initialEndDate: "2026-05-29" })];
     const { workdays, weekStarts } = buildTimeline(tasks, "2026-05-04", "2026-05-29");
     const sprints = buildSprints(workdays, weekStarts);
     expect(sprints[0].start.getTime()).toBe(workdays[0].getTime());
   });
 
   it("sprint width equals chunk length * COL_WIDTH", () => {
-    const tasks = [makeTask({ startDate: "2026-05-04", endDate: "2026-05-29" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-04", initialEndDate: "2026-05-29" })];
     const { workdays, weekStarts } = buildTimeline(tasks, "2026-05-04", "2026-05-29");
     const sprints = buildSprints(workdays, weekStarts);
     for (const sp of sprints) {
@@ -205,21 +205,21 @@ describe("buildSprints", () => {
 
 describe("findDateIndex", () => {
   it("returns exact match from dateToIndex", () => {
-    const tasks = [makeTask({ startDate: "2026-05-04", endDate: "2026-05-08" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-04", initialEndDate: "2026-05-08" })];
     const { workdays, dateToIndex } = buildTimeline(tasks, "2026-05-04", "2026-05-08");
     const idx = findDateIndex("2026-05-04", "start", workdays, dateToIndex);
     expect(idx).toBe(0);
   });
 
   it("snaps start mode to next workday for weekend date", () => {
-    const tasks = [makeTask({ startDate: "2026-05-04", endDate: "2026-05-08" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-04", initialEndDate: "2026-05-08" })];
     const { workdays, dateToIndex } = buildTimeline(tasks, "2026-05-04", "2026-05-08");
     const idx = findDateIndex("2026-05-02", "start", workdays, dateToIndex);
     expect(idx).toBe(0);
   });
 
   it("snaps end mode to previous workday for weekend date", () => {
-    const tasks = [makeTask({ startDate: "2026-05-04", endDate: "2026-05-08" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-04", initialEndDate: "2026-05-08" })];
     const { workdays, dateToIndex } = buildTimeline(tasks, "2026-05-04", "2026-05-08");
     const idx = findDateIndex("2026-05-03", "end", workdays, dateToIndex);
     expect(idx).toBeGreaterThanOrEqual(0);
@@ -227,14 +227,14 @@ describe("findDateIndex", () => {
   });
 
   it("returns last index for start mode with future date", () => {
-    const tasks = [makeTask({ startDate: "2026-05-04", endDate: "2026-05-08" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-04", initialEndDate: "2026-05-08" })];
     const { workdays, dateToIndex } = buildTimeline(tasks, "2026-05-04", "2026-05-08");
     const idx = findDateIndex("2027-01-01", "start", workdays, dateToIndex);
     expect(idx).toBe(workdays.length - 1);
   });
 
   it("returns 0 for end mode with past date", () => {
-    const tasks = [makeTask({ startDate: "2026-05-04", endDate: "2026-05-08" })];
+    const tasks = [makeTask({ initialStartDate: "2026-05-04", initialEndDate: "2026-05-08" })];
     const { workdays, dateToIndex } = buildTimeline(tasks, "2026-05-04", "2026-05-08");
     const idx = findDateIndex("2020-01-01", "end", workdays, dateToIndex);
     expect(idx).toBe(0);

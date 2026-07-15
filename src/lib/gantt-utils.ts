@@ -68,8 +68,12 @@ export function buildTimeline(
     mn = Infinity;
     mx = -Infinity;
     for (const t of tasks) {
-      if (t.startDate) mn = Math.min(mn, parseDate(t.startDate));
-      if (t.endDate) mx = Math.max(mx, parseDate(t.endDate));
+      if (t.initialStartDate) mn = Math.min(mn, parseDate(t.initialStartDate));
+      if (t.initialEndDate) mx = Math.max(mx, parseDate(t.initialEndDate));
+      if (t.estimatedStartDate) mn = Math.min(mn, parseDate(t.estimatedStartDate));
+      if (t.estimatedEndDate) mx = Math.max(mx, parseDate(t.estimatedEndDate));
+      if (t.actualStartDate) mn = Math.min(mn, parseDate(t.actualStartDate));
+      if (t.actualEndDate) mx = Math.max(mx, parseDate(t.actualEndDate));
     }
     mn -= DAY_MS * 3;
     mx += DAY_MS * 5;

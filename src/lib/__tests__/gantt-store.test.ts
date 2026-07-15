@@ -24,21 +24,21 @@ describe("gantt-store", () => {
     });
 
     it("creates a subtask without dates by default", () => {
-      const parent = store.add({ title: "Parent", startDate: "2026-03-01" });
+      const parent = store.add({ title: "Parent", initialStartDate: "2026-03-01" });
       const child = store.add({ title: "Child", parentId: parent.id });
       expect(child.parentId).toBe(parent.id);
-      expect(child.startDate).toBeUndefined();
-      expect(child.endDate).toBeUndefined();
+      expect(child.initialStartDate).toBeUndefined();
+      expect(child.initialEndDate).toBeUndefined();
     });
 
     it("clamps subtask endDate to startDate if earlier", () => {
       const child = store.add({
         title: "Child",
-        startDate: "2026-03-01",
-        endDate: "2026-01-15",
+        initialStartDate: "2026-03-01",
+        initialEndDate: "2026-01-15",
       });
-      expect(child.startDate).toBe("2026-03-01");
-      expect(child.endDate).toBe("2026-03-01");
+      expect(child.initialStartDate).toBe("2026-03-01");
+      expect(child.initialEndDate).toBe("2026-03-01");
     });
 
     it("accepts custom fields", () => {
@@ -64,29 +64,29 @@ describe("gantt-store", () => {
       expect(updated.progress).toBe(80);
     });
 
-    it("clamps subtask startDate to parent startDate", () => {
-      const parent = store.add({ title: "Parent", startDate: "2026-03-01" });
+    it("clamps subtask initialStartDate to parent initialStartDate", () => {
+      const parent = store.add({ title: "Parent", initialStartDate: "2026-03-01" });
       const child = store.add({ title: "Child", parentId: parent.id });
-      store.update(child.id, { startDate: "2026-01-01" });
+      store.update(child.id, { initialStartDate: "2026-01-01" });
       const updated = getTasks().find((x) => x.id === child.id)!;
-      expect(updated.startDate).toBe("2026-03-01");
+      expect(updated.initialStartDate).toBe("2026-03-01");
     });
 
-    it("pushes subtasks forward when parent startDate moves later", () => {
+    it("pushes subtasks forward when parent initialStartDate moves later", () => {
       const parent = store.add({
         title: "Parent",
-        startDate: "2026-01-01",
-        endDate: "2026-01-10",
+        initialStartDate: "2026-01-01",
+        initialEndDate: "2026-01-10",
       });
       const child = store.add({
         title: "Child",
         parentId: parent.id,
-        startDate: "2026-01-01",
-        endDate: "2026-01-05",
+        initialStartDate: "2026-01-01",
+        initialEndDate: "2026-01-05",
       });
-      store.update(parent.id, { startDate: "2026-02-01" });
+      store.update(parent.id, { initialStartDate: "2026-02-01" });
       const updatedChild = getTasks().find((x) => x.id === child.id)!;
-      expect(updatedChild.startDate).toBe("2026-02-01");
+      expect(updatedChild.initialStartDate).toBe("2026-02-01");
     });
 
     it("does nothing for non-existent id", () => {

@@ -119,7 +119,8 @@ export function GanttChart({
           {order.map((task, rowIdx) => {
             const progress = computeProgress(task);
             const hasActual = !!(task.actualStartDate && task.actualEndDate);
-            const hasPlanned = !!(task.startDate && task.endDate);
+            const hasEstimated = !!(task.estimatedStartDate && task.estimatedEndDate);
+            const hasInitial = !!(task.initialStartDate && task.initialEndDate);
             const isParent = tasks.some((t) => t.parentId === task.id);
             const barBgColor =
               progress >= 100
@@ -130,16 +131,31 @@ export function GanttChart({
                     ? "bg-[var(--status-partial)]"
                     : "bg-[var(--status-progress)]";
 
-            let pLeft = 0,
-              pWidth = 0;
-            if (hasPlanned) {
-              const sIdx = findDateIndex(task.startDate!, "start", workdays, dateToIndex);
-              const eIdx = findDateIndex(task.endDate!, "end", workdays, dateToIndex);
+            // Initial bar positions
+            let iLeft = 0,
+              iWidth = 0;
+            if (hasInitial) {
+              const sIdx = findDateIndex(task.initialStartDate!, "start", workdays, dateToIndex);
+              const eIdx = findDateIndex(task.initialEndDate!, "end", workdays, dateToIndex);
               const from = Math.min(sIdx, eIdx);
               const to = Math.max(sIdx, eIdx);
-              pLeft = from * COL_WIDTH;
-              pWidth = Math.max(COL_WIDTH * 0.6, (to - from + 1) * COL_WIDTH - 2);
+              iLeft = from * COL_WIDTH;
+              iWidth = Math.max(COL_WIDTH * 0.6, (to - from + 1) * COL_WIDTH - 2);
             }
+
+            // Estimated bar positions
+            let eLeft = 0,
+              eWidth = 0;
+            if (hasEstimated) {
+              const sIdx = findDateIndex(task.estimatedStartDate!, "start", workdays, dateToIndex);
+              const eIdx = findDateIndex(task.estimatedEndDate!, "end", workdays, dateToIndex);
+              const from = Math.min(sIdx, eIdx);
+              const to = Math.max(sIdx, eIdx);
+              eLeft = from * COL_WIDTH;
+              eWidth = Math.max(COL_WIDTH * 0.6, (to - from + 1) * COL_WIDTH - 2);
+            }
+
+            // Actual bar positions
             let aLeft = 0,
               aWidth = 0;
             if (hasActual) {
@@ -156,24 +172,31 @@ export function GanttChart({
               aWidth = Math.max(COL_WIDTH * 0.6, (aTo - aFrom + 1) * COL_WIDTH - 2);
             }
 
+            // Delay at end (actualEndDate > estimatedEndDate)
             const isDelayed =
               hasActual &&
-              hasPlanned &&
-              !!task.endDate &&
+              hasEstimated &&
+              !!task.estimatedEndDate &&
               !!task.actualEndDate &&
-              task.actualEndDate > task.endDate;
-            const delayLeft = isDelayed ? pLeft + pWidth : 0;
-            const delayWidth = isDelayed ? aLeft + aWidth - (pLeft + pWidth) : 0;
+              task.actualEndDate > task.estimatedEndDate;
+            const delayLeft = isDelayed ? eLeft + eWidth : 0;
+            const effectiveDelayLeft = isDelayed ? Math.max(delayLeft, aLeft) : 0;
+            const effectiveDelayWidth = isDelayed ? aLeft + aWidth - effectiveDelayLeft : 0;
             const normalLeft = aLeft;
-            const normalWidth = isDelayed ? delayLeft - aLeft : aWidth;
+            const normalWidth = isDelayed ? Math.max(0, delayLeft - aLeft) : aWidth;
+
+            // Start delay arrow (actualStartDate > estimatedStartDate)
             const isStartDelayed =
               hasActual &&
-              hasPlanned &&
+              hasInitial &&
               !!task.actualStartDate &&
-              !!task.startDate &&
-              task.actualStartDate > task.startDate;
-            const startDelayLeft = isStartDelayed ? pLeft : 0;
-            const startDelayWidth = isStartDelayed ? aLeft - pLeft : 0;
+              !!task.initialStartDate &&
+              task.actualStartDate > task.initialStartDate;
+            const startDelayLeft = isStartDelayed ? iLeft : 0;
+            const startDelayWidth = isStartDelayed ? aLeft - iLeft : 0;
+
+            // Which bar is clickable (prefer estimated, fallback to initial)
+            const clickBar = hasEstimated ? "estimated" : hasInitial ? "initial" : null;
 
             return (
               <div
@@ -209,7 +232,7 @@ export function GanttChart({
                       isParent && "opacity-90 ring-1 ring-white/30",
                     )}
                     style={{ left: normalLeft, width: normalWidth, height: 22, zIndex: 1 }}
-                    title={`Real: ${task.title} · ${progress}%${hasPlanned ? ` · Plan: ${task.startDate} → ${task.endDate}` : ""}`}
+                    title={`Real: ${task.title} · ${progress}%${hasEstimated ? ` · Estimada: ${task.estimatedStartDate} → ${task.estimatedEndDate}` : ""}`}
                   >
                     <span className="relative z-10 truncate px-2 font-medium">
                       {task.title} · {progress}%
@@ -218,19 +241,24 @@ export function GanttChart({
                 )}
 
                 {/* Delayed segment — zIndex 1 */}
-                {hasActual && isDelayed && delayWidth > 0 && (
+                {hasActual && isDelayed && effectiveDelayWidth > 0 && (
                   <div
                     className="pointer-events-none absolute top-1/2 -translate-y-1/2 bg-[var(--status-delayed)]"
-                    style={{ left: delayLeft, width: delayWidth, height: 22, zIndex: 1 }}
-                    title={`Retraso: ${task.endDate} → ${task.actualEndDate}`}
+                    style={{
+                      left: effectiveDelayLeft,
+                      width: effectiveDelayWidth,
+                      height: 22,
+                      zIndex: 1,
+                    }}
+                    title={`Retraso: ${task.estimatedEndDate} → ${task.actualEndDate}`}
                   />
                 )}
 
                 {/* Progress border overlay — zIndex 3 */}
                 {progress > 0 &&
                   (() => {
-                    const barL = hasActual ? aLeft : pLeft;
-                    const barW = hasActual ? aWidth : pWidth;
+                    const barL = hasActual ? aLeft : hasEstimated ? eLeft : iLeft;
+                    const barW = hasActual ? aWidth : hasEstimated ? eWidth : iWidth;
                     const fillW = barW * (progress / 100);
                     return (
                       <div
@@ -245,28 +273,36 @@ export function GanttChart({
                     );
                   })()}
 
-                {/* Planned bar — always visible, zIndex 4 */}
-                {hasPlanned &&
+                {/* Estimated bar — zIndex 4, dashed gray */}
+                {hasEstimated &&
                   (hasActual ? (
                     <div
-                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-dashed bg-transparent border-black/60"
-                      style={{ left: pLeft, width: pWidth, height: 22, zIndex: 4 }}
+                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-dashed bg-transparent border-gray-400"
+                      style={{ left: eLeft, width: eWidth, height: 22, zIndex: 4 }}
                     />
                   ) : (
                     <div
                       onClick={() => onSelect(task.id)}
                       className={cn(
-                        "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden border-2 border-dashed bg-transparent border-black/60 text-left text-xs transition hover:brightness-110",
+                        "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden border-2 border-dashed bg-transparent border-gray-400 text-left text-xs transition hover:brightness-110",
                         isParent && "opacity-90",
                       )}
-                      style={{ left: pLeft, width: pWidth, height: 22, zIndex: 4 }}
-                      title={`${task.title} · ${task.startDate} → ${task.endDate}`}
+                      style={{ left: eLeft, width: eWidth, height: 22, zIndex: 4 }}
+                      title={`${task.title} · Estimada: ${task.estimatedStartDate} → ${task.estimatedEndDate}`}
                     >
                       <span className="relative z-10 truncate px-2 font-medium">{task.title}</span>
                     </div>
                   ))}
 
-                {/* Start delay arrow — zIndex 5 */}
+                {/* Initial bar — zIndex 5, dashed black */}
+                {hasInitial && (
+                  <div
+                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-dashed bg-transparent border-black/60"
+                    style={{ left: iLeft, width: iWidth, height: 22, zIndex: 5 }}
+                  />
+                )}
+
+                {/* Start delay arrow — zIndex 6 */}
                 {isStartDelayed && startDelayWidth > 0 && (
                   <svg
                     className="pointer-events-none absolute top-0"
@@ -274,7 +310,7 @@ export function GanttChart({
                       left: startDelayLeft,
                       width: startDelayWidth,
                       height: ROW_HEIGHT,
-                      zIndex: 5,
+                      zIndex: 6,
                     }}
                   >
                     <line
@@ -284,7 +320,6 @@ export function GanttChart({
                       y2="50%"
                       stroke="var(--today)"
                       strokeWidth="2"
-                      strokeDasharray="4 2"
                     />
                     <polygon
                       points={`${startDelayWidth},${ROW_HEIGHT / 2} ${startDelayWidth - 6},${ROW_HEIGHT / 2 - 4} ${startDelayWidth - 6},${ROW_HEIGHT / 2 + 4}`}

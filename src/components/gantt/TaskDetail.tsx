@@ -64,13 +64,15 @@ export function TaskDetail({
       <div className="rounded-md border bg-muted/40 p-3">
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Fechas planificadas
+            Planificación inicial
           </div>
-          {(task.startDate || task.endDate) && (
+          {(task.initialStartDate || task.initialEndDate) && (
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => store.update(task.id, { startDate: undefined, endDate: undefined })}
+              onClick={() =>
+                store.update(task.id, { initialStartDate: undefined, initialEndDate: undefined })
+              }
             >
               Limpiar
             </Button>
@@ -78,35 +80,93 @@ export function TaskDetail({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Inicio estimado</Label>
+            <Label>Fecha inicio inicial</Label>
             <DatePicker
-              value={task.startDate ?? ""}
-              min={parent?.startDate ?? projectStartDate}
+              value={task.initialStartDate ?? ""}
+              min={parent?.initialStartDate ?? projectStartDate}
               onChange={(v) => {
-                const patch: Partial<Task> = { startDate: v || undefined };
-                if (!v && task.endDate) {
-                  patch.endDate = undefined;
+                const patch: Partial<Task> = { initialStartDate: v || undefined };
+                if (!v && task.initialEndDate) {
+                  patch.initialEndDate = undefined;
                 }
-                if (v && task.endDate && task.endDate < v) {
-                  patch.endDate = undefined;
+                if (v && task.initialEndDate && task.initialEndDate < v) {
+                  patch.initialEndDate = undefined;
                 }
                 store.update(task.id, patch);
               }}
             />
-            {parent && (
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                No puede ser antes del {parent.startDate}
-              </p>
-            )}
           </div>
           <div>
-            <Label>Fin estimado</Label>
-            {task.startDate ? (
+            <Label>Fecha fin inicial</Label>
+            {task.initialStartDate ? (
               <DatePicker
-                value={task.endDate ?? ""}
-                min={task.startDate}
-                focusMonth={task.startDate}
-                onChange={(v) => store.update(task.id, { endDate: v || undefined })}
+                value={task.initialEndDate ?? ""}
+                min={task.initialStartDate}
+                focusMonth={task.initialStartDate}
+                onChange={(v) => store.update(task.id, { initialEndDate: v || undefined })}
+              />
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full justify-start font-normal text-muted-foreground"
+                disabled
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Primero indica inicio
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="rounded-md border bg-muted/40 p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Fechas estimadas
+          </div>
+          {(task.estimatedStartDate || task.estimatedEndDate) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() =>
+                store.update(task.id, {
+                  estimatedStartDate: undefined,
+                  estimatedEndDate: undefined,
+                })
+              }
+            >
+              Limpiar
+            </Button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>Fecha inicio estimada</Label>
+            <DatePicker
+              value={task.estimatedStartDate ?? ""}
+              min={parent?.estimatedStartDate ?? parent?.initialStartDate ?? projectStartDate}
+              onChange={(v) => {
+                const patch: Partial<Task> = { estimatedStartDate: v || undefined };
+                if (!v && task.estimatedEndDate) {
+                  patch.estimatedEndDate = undefined;
+                }
+                if (v && task.estimatedEndDate && task.estimatedEndDate < v) {
+                  patch.estimatedEndDate = undefined;
+                }
+                store.update(task.id, patch);
+              }}
+            />
+          </div>
+          <div>
+            <Label>Fecha fin estimada</Label>
+            {task.estimatedStartDate ? (
+              <DatePicker
+                value={task.estimatedEndDate ?? ""}
+                min={task.estimatedStartDate}
+                focusMonth={task.estimatedStartDate}
+                onChange={(v) => store.update(task.id, { estimatedEndDate: v || undefined })}
               />
             ) : (
               <Button
@@ -141,18 +201,16 @@ export function TaskDetail({
             </Button>
           )}
         </div>
-        {!task.startDate || !task.endDate ? (
-          <p className="py-2 text-xs text-muted-foreground">
-            Primero define las fechas planificadas.
-          </p>
+        {!task.estimatedStartDate || !task.estimatedEndDate ? (
+          <p className="py-2 text-xs text-muted-foreground">Primero define las fechas estimadas.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Inicio real</Label>
               <DatePicker
                 value={task.actualStartDate ?? ""}
-                min={task.startDate}
-                focusMonth={task.startDate ?? projectStartDate}
+                min={task.estimatedStartDate}
+                focusMonth={task.estimatedStartDate ?? projectStartDate}
                 onChange={(v) => {
                   const patch: Partial<Task> = { actualStartDate: v || undefined };
                   if (!v && task.actualEndDate) {
