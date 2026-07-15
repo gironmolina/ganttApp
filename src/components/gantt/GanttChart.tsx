@@ -166,6 +166,14 @@ export function GanttChart({
             const delayWidth = isDelayed ? aLeft + aWidth - (pLeft + pWidth) : 0;
             const normalLeft = aLeft;
             const normalWidth = isDelayed ? delayLeft - aLeft : aWidth;
+            const isStartDelayed =
+              hasActual &&
+              hasPlanned &&
+              !!task.actualStartDate &&
+              !!task.startDate &&
+              task.actualStartDate > task.startDate;
+            const startDelayLeft = isStartDelayed ? pLeft : 0;
+            const startDelayWidth = isStartDelayed ? aLeft - pLeft : 0;
 
             return (
               <div
@@ -257,6 +265,33 @@ export function GanttChart({
                       <span className="relative z-10 truncate px-2 font-medium">{task.title}</span>
                     </div>
                   ))}
+
+                {/* Start delay arrow — zIndex 5 */}
+                {isStartDelayed && startDelayWidth > 0 && (
+                  <svg
+                    className="pointer-events-none absolute top-0"
+                    style={{
+                      left: startDelayLeft,
+                      width: startDelayWidth,
+                      height: ROW_HEIGHT,
+                      zIndex: 5,
+                    }}
+                  >
+                    <line
+                      x1="0"
+                      y1="50%"
+                      x2="100%"
+                      y2="50%"
+                      stroke="var(--today)"
+                      strokeWidth="2"
+                      strokeDasharray="4 2"
+                    />
+                    <polygon
+                      points={`${startDelayWidth},${ROW_HEIGHT / 2} ${startDelayWidth - 6},${ROW_HEIGHT / 2 - 4} ${startDelayWidth - 6},${ROW_HEIGHT / 2 + 4}`}
+                      fill="var(--today)"
+                    />
+                  </svg>
+                )}
               </div>
             );
           })}
