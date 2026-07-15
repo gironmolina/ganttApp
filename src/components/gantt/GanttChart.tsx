@@ -190,7 +190,7 @@ export function GanttChart({
 
                 {hasActual && hasPlanned && !(aLeft === pLeft && aWidth === pWidth) && (
                   <div
-                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded-md border-2 border-dashed bg-transparent border-black"
+                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded-md border-2 border-dashed bg-transparent border-black/60"
                     style={{ left: pLeft, width: pWidth, height: 22, zIndex: 2 }}
                   />
                 )}

@@ -58,7 +58,7 @@
   --input: oklch(0.92 0.01 250);
   --ring: oklch(0.5 0.18 255);
 
-  --status-progress: oklch(0.62 0.17 250);
+  --status-progress: oklch(0.68 0.17 250);
   --status-complete: oklch(0.65 0.16 155);
   --status-blocked: oklch(0.6 0.22 25);
   --status-partial: oklch(0.75 0.17 75);

@@ -43,7 +43,7 @@
       "parentId": null,
       "title": "Discovery",
       "assignee": "Plain Concepts",
-      "progress": 30,
+      "progress": 20,
       "block": "none",
       "comments": [],
       "createdAt": "2026-07-14",
@@ -51,7 +51,7 @@
       "startDate": "2026-05-04",
       "endDate": "2026-05-08",
       "actualStartDate": "2026-05-04",
-      "actualEndDate": "2026-05-05"
+      "actualEndDate": "2026-05-22"
     },
     {
       "id": "if8824yl",
