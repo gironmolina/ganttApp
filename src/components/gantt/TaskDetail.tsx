@@ -152,6 +152,7 @@ export function TaskDetail({
               <DatePicker
                 value={task.actualStartDate ?? ""}
                 min={task.startDate}
+                focusMonth={task.startDate ?? projectStartDate}
                 onChange={(v) => {
                   const patch: Partial<Task> = { actualStartDate: v || undefined };
                   if (!v && task.actualEndDate) {

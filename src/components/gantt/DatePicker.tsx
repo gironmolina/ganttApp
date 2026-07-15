@@ -50,6 +50,7 @@ export function DatePicker({
           mode="single"
           selected={selected}
           defaultMonth={defaultMonth}
+          startMonth={minDate}
           onSelect={(date) => {
             if (date) {
               const y = date.getFullYear();
