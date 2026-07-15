@@ -47,7 +47,11 @@
       "block": "none",
       "comments": [],
       "createdAt": "2026-07-14",
-      "position": 0
+      "position": 0,
+      "startDate": "2026-05-04",
+      "endDate": "2026-05-08",
+      "actualStartDate": "2026-05-04",
+      "actualEndDate": "2026-05-05"
     },
     {
       "id": "if8824yl",

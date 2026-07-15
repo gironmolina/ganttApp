@@ -227,14 +227,7 @@ export function GanttChart({
                   >
                     <span className="relative z-10 truncate px-2 font-medium">{task.title}</span>
                   </div>
-                ) : (
-                  <div
-                    onClick={() => onSelect(task.id)}
-                    className="absolute top-1/2 -translate-y-1/2 cursor-pointer text-xs text-muted-foreground"
-                  >
-                    <span className="px-2">{task.title}</span>
-                  </div>
-                )}
+                ) : null}
               </div>
             );
           })}
