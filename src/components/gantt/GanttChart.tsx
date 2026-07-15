@@ -193,7 +193,7 @@ export function GanttChart({
 
                 {hasActual && hasPlanned && !(aLeft === pLeft && aWidth === pWidth) && (
                   <div
-                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded-md border-2 border-dashed bg-transparent border-black/60"
+                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-dashed bg-transparent border-black/60"
                     style={{ left: pLeft, width: pWidth, height: 22, zIndex: 2 }}
                   />
                 )}
@@ -203,7 +203,7 @@ export function GanttChart({
                     <button
                       onClick={() => onSelect(task.id)}
                       className={cn(
-                        "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden rounded-l-md text-left text-xs text-white shadow-sm transition hover:brightness-110",
+                        "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden text-left text-xs text-white shadow-sm transition hover:brightness-110",
                         barBgColor,
                         isParent && "opacity-90 ring-1 ring-white/30",
                       )}
@@ -212,7 +212,7 @@ export function GanttChart({
                     >
                       <div
                         className="absolute inset-y-0 left-0 bg-black/25"
-                        style={{ width: `${Math.min(100, (progress * aWidth) / normalWidth)}%` }}
+                        style={{ width: `${progress}%` }}
                       />
                       <span className="relative z-10 truncate px-2 font-medium">
                         {task.title} · {progress}%
@@ -220,7 +220,7 @@ export function GanttChart({
                     </button>
                     {isDelayed && delayWidth > 0 && (
                       <div
-                        className="absolute top-1/2 -translate-y-1/2 rounded-r-md bg-[var(--status-delayed)]"
+                        className="absolute top-1/2 -translate-y-1/2 bg-[var(--status-delayed)]"
                         style={{ left: delayLeft, width: delayWidth, height: 22, zIndex: 1 }}
                         title={`Retraso: ${task.endDate} → ${task.actualEndDate}`}
                       />
@@ -230,7 +230,7 @@ export function GanttChart({
                   <div
                     onClick={() => onSelect(task.id)}
                     className={cn(
-                      "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden rounded-md border-2 border-dashed bg-transparent border-black/60 text-left text-xs transition hover:brightness-110",
+                      "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden border-2 border-dashed bg-transparent border-black/60 text-left text-xs transition hover:brightness-110",
                       isParent && "opacity-90",
                     )}
                     style={{ left: pLeft, width: pWidth, height: 22 }}
@@ -239,6 +239,24 @@ export function GanttChart({
                     <span className="relative z-10 truncate px-2 font-medium">{task.title}</span>
                   </div>
                 ) : null}
+
+                {progress > 0 &&
+                  (() => {
+                    const barL = hasActual ? aLeft : pLeft;
+                    const barW = hasActual ? aWidth : pWidth;
+                    const fillW = barW * (progress / 100);
+                    return (
+                      <div
+                        className="pointer-events-none absolute top-1/2 -translate-y-1/2 overflow-hidden"
+                        style={{ left: barL, width: fillW, height: 22, zIndex: 3 }}
+                      >
+                        <div
+                          className="border-2 border-solid border-[var(--status-complete)]"
+                          style={{ width: barW, height: 22 }}
+                        />
+                      </div>
+                    );
+                  })()}
               </div>
             );
           })}

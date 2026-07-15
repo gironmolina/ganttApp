@@ -1,57 +1,19 @@
 {
   "tasks": [
     {
-      "id": "iphjuv35",
-      "parentId": null,
-      "title": "Planificación del proyecto",
-      "assignee": "Plain Concepts",
-      "startDate": "2026-07-14",
-      "endDate": "2026-07-20",
-      "progress": 60,
-      "block": "none",
-      "comments": [],
-      "createdAt": "2026-07-14",
-      "position": 3
-    },
-    {
-      "id": "7z8b55dt",
-      "parentId": "iphjuv35",
-      "title": "Definir alcance",
-      "assignee": "Plain Concepts",
-      "startDate": "2026-07-14",
-      "endDate": "2026-07-16",
-      "progress": 100,
-      "block": "none",
-      "comments": [],
-      "createdAt": "2026-07-14"
-    },
-    {
-      "id": "oaergjpo",
-      "parentId": "iphjuv35",
-      "title": "Kick-off con stakeholders",
-      "assignee": "Plain Concepts",
-      "startDate": "2026-07-17",
-      "endDate": "2026-07-19",
-      "progress": 40,
-      "block": "partial",
-      "blockReason": "Esperando disponibilidad de cliente",
-      "comments": [],
-      "createdAt": "2026-07-14"
-    },
-    {
       "id": "2ajwx1y1",
       "parentId": null,
       "title": "Discovery",
       "assignee": "Plain Concepts",
-      "progress": 40,
+      "progress": 60,
       "block": "none",
       "comments": [],
       "createdAt": "2026-07-14",
       "position": 0,
       "startDate": "2026-05-04",
-      "endDate": "2026-06-01",
+      "endDate": "2026-05-13",
       "actualStartDate": "2026-05-04",
-      "actualEndDate": "2026-06-12"
+      "actualEndDate": "2026-05-18"
     },
     {
       "id": "if8824yl",
