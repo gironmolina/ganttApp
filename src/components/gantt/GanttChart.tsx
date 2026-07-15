@@ -134,7 +134,7 @@ export function GanttChart({
               const from = Math.min(sIdx, eIdx);
               const to = Math.max(sIdx, eIdx);
               iLeft = from * COL_WIDTH;
-              iWidth = Math.max(COL_WIDTH * 0.6, (to - from + 1) * COL_WIDTH - 2);
+              iWidth = Math.max(COL_WIDTH * 0.6, (to - from + 1) * COL_WIDTH);
             }
 
             // Estimated bar positions
@@ -146,7 +146,7 @@ export function GanttChart({
               const from = Math.min(sIdx, eIdx);
               const to = Math.max(sIdx, eIdx);
               eLeft = from * COL_WIDTH;
-              eWidth = Math.max(COL_WIDTH * 0.6, (to - from + 1) * COL_WIDTH - 2);
+              eWidth = Math.max(COL_WIDTH * 0.6, (to - from + 1) * COL_WIDTH);
             }
 
             // Actual bar positions
@@ -163,7 +163,7 @@ export function GanttChart({
               const aFrom = Math.min(aStartIdx, aEndIdx);
               const aTo = Math.max(aStartIdx, aEndIdx);
               aLeft = aFrom * COL_WIDTH;
-              aWidth = Math.max(COL_WIDTH * 0.6, (aTo - aFrom + 1) * COL_WIDTH - 2);
+              aWidth = Math.max(COL_WIDTH * 0.6, (aTo - aFrom + 1) * COL_WIDTH);
             }
 
             // Delay at end (actualEndDate > estimatedEndDate)
@@ -251,14 +251,14 @@ export function GanttChart({
                   const bFrom = Math.min(bStartIdx, bEndIdx);
                   const bTo = Math.max(bStartIdx, bEndIdx);
                   const bLeft = bFrom * COL_WIDTH;
-                  const bWidth = Math.max(2, (bTo - bFrom + 1) * COL_WIDTH - 2);
+                  const bWidth = Math.max(2, (bTo - bFrom + 1) * COL_WIDTH);
                   const isTotal = block.type === "total";
                   return (
                     <div
                       key={block.id}
                       className={cn(
                         "pointer-events-none absolute top-1/2 -translate-y-1/2 border-l-2 border-r-2 border-[var(--status-blocked)]",
-                        isTotal && "bg-[var(--status-blocked)]/30",
+                        isTotal && "bg-[var(--status-blocked)]",
                       )}
                       style={{
                         left: bLeft,

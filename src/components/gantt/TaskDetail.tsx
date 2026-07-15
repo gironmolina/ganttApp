@@ -344,7 +344,11 @@ export function TaskDetail({
                   <Label className="text-[10px]">Inicio bloqueo</Label>
                   <DatePicker
                     value={block.startDate}
-                    min={task.estimatedStartDate ?? task.initialStartDate ?? projectStartDate}
+                    min={
+                      block.type === "partial"
+                        ? (task.estimatedStartDate ?? task.initialStartDate ?? projectStartDate)
+                        : projectStartDate
+                    }
                     onChange={(v) => {
                       store.update(task.id, {
                         blocks: task.blocks.map((b) =>
