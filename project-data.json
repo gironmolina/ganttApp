@@ -125,12 +125,18 @@
       "blocks": [
         {
           "id": "kh2il6fj",
+          "type": "total",
+          "startDate": "2026-07-01",
+          "endDate": "2026-07-01"
+        },
+        {
+          "id": "sr6s8pbk",
           "type": "partial",
           "startDate": "2026-07-09",
           "endDate": "2026-07-22"
         },
         {
-          "id": "sr6s8pbk",
+          "id": "puvkxgx2",
           "type": "total",
           "startDate": "2026-07-16",
           "endDate": "2026-07-17"
@@ -196,14 +202,14 @@
         {
           "id": "ohxzyopy",
           "type": "total",
-          "startDate": "2026-07-16",
-          "endDate": "2026-07-16"
+          "startDate": "2026-07-15",
+          "endDate": "2026-07-15"
         }
       ],
       "comments": [],
       "createdAt": "2026-07-16",
-      "initialStartDate": "2026-07-16",
-      "initialEndDate": "2026-07-21",
+      "initialStartDate": "2026-07-15",
+      "initialEndDate": "2026-07-20",
       "estimatedStartDate": "2026-08-07",
       "estimatedEndDate": "2026-08-20"
     },
@@ -217,10 +223,10 @@
       "blocks": [],
       "comments": [],
       "createdAt": "2026-07-16",
-      "initialStartDate": "2026-07-16",
-      "initialEndDate": "2026-08-03",
-      "estimatedStartDate": "2026-07-16",
-      "estimatedEndDate": "2026-08-03"
+      "initialStartDate": "2026-07-15",
+      "initialEndDate": "2026-07-31",
+      "estimatedStartDate": "2026-08-17",
+      "estimatedEndDate": "2026-09-01"
     },
     {
       "id": "5o1fspjc",
@@ -231,7 +237,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-07-21",
+      "initialEndDate": "2026-08-31",
+      "estimatedStartDate": "2026-08-21",
+      "estimatedEndDate": "2026-09-01"
     },
     {
       "id": "1lm286nu",
@@ -242,7 +252,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-07-21",
+      "initialEndDate": "2026-08-31",
+      "estimatedStartDate": "2026-09-01",
+      "estimatedEndDate": "2026-09-15"
     },
     {
       "id": "jydzm27e",
@@ -253,7 +267,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-07-22",
+      "initialEndDate": "2026-07-31",
+      "estimatedStartDate": "2026-08-21",
+      "estimatedEndDate": "2026-09-07"
     },
     {
       "id": "akrajqwg",
@@ -264,7 +282,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-07-22",
+      "initialEndDate": "2026-08-10",
+      "estimatedStartDate": "2026-08-21",
+      "estimatedEndDate": "2026-09-21"
     },
     {
       "id": "3fc9z0df",
@@ -275,7 +297,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-08-03",
+      "initialEndDate": "2026-09-15",
+      "estimatedStartDate": "2026-09-08",
+      "estimatedEndDate": "2026-10-21"
     },
     {
       "id": "oex92rdz",
