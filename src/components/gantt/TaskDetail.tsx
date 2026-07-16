@@ -239,6 +239,11 @@ export function TaskDetail({
                   </Button>
                 )}
               </div>
+              {!task.initialStartDate || !task.initialEndDate ? (
+                <p className="py-1 text-[10px] text-muted-foreground">
+                  Primero define las fechas de planificación inicial.
+                </p>
+              ) : (
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-[9px]">Inicio estimada</Label>
@@ -278,6 +283,7 @@ export function TaskDetail({
                   )}
                 </div>
               </div>
+              )}
             </div>
 
             <div className="border-b" />

@@ -60,14 +60,7 @@
       "estimatedStartDate": "2026-06-22",
       "estimatedEndDate": "2026-06-30",
       "progress": 95,
-      "comments": [
-        {
-          "id": "9r3909cn",
-          "author": "sdf",
-          "text": "asdfasdf",
-          "createdAt": "2026-07-16T12:36:22.379Z"
-        }
-      ],
+      "comments": [],
       "createdAt": "2026-07-14",
       "actualStartDate": "2026-06-22",
       "actualEndDate": "2026-07-10",
@@ -77,13 +70,14 @@
           "type": "partial",
           "startDate": "2026-06-22",
           "endDate": "2026-07-02",
-          "reason": "sdfas"
+          "reason": "no me responden"
         },
         {
           "id": "i8yd8z7e",
           "type": "partial",
           "startDate": "2026-07-10",
-          "endDate": "2026-07-10"
+          "endDate": "2026-07-10",
+          "reason": "no me responden"
         }
       ]
     },
@@ -198,9 +192,20 @@
       "title": "Core KPI Venta Bruta Lowi",
       "assignee": "",
       "progress": 0,
-      "blocks": [],
+      "blocks": [
+        {
+          "id": "ohxzyopy",
+          "type": "total",
+          "startDate": "2026-07-16",
+          "endDate": "2026-07-16"
+        }
+      ],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-07-16",
+      "initialEndDate": "2026-07-21",
+      "estimatedStartDate": "2026-08-07",
+      "estimatedEndDate": "2026-08-20"
     },
     {
       "id": "1mtup8c2",

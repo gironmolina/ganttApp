@@ -91,6 +91,7 @@ function Index() {
       if (target.closest("[data-task-editor]")) return;
       if (target.closest("[data-task-bar]")) return;
       if (target.closest("[data-task-row]")) return;
+      if (target.closest("[data-radix-popper-content-wrapper]")) return;
       if (isScrollbarMouseDown(e)) return;
       setSelectedId(null);
     };
