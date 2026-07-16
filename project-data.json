@@ -359,7 +359,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-09-24",
+      "initialEndDate": "2026-10-07",
+      "estimatedStartDate": "2026-11-16",
+      "estimatedEndDate": "2026-11-27"
     },
     {
       "id": "dmry54v8",
@@ -370,7 +374,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-09-24",
+      "initialEndDate": "2026-10-07",
+      "estimatedStartDate": "2026-11-16",
+      "estimatedEndDate": "2026-11-27"
     },
     {
       "id": "ixj9kcb8",
