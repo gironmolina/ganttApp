@@ -48,7 +48,8 @@
       "createdAt": "2026-07-14",
       "actualStartDate": "2026-06-15",
       "actualEndDate": "2026-06-19",
-      "blocks": []
+      "blocks": [],
+      "position": 0
     },
     {
       "id": "jms1no60",
@@ -79,12 +80,13 @@
           "endDate": "2026-07-10",
           "reason": "no me responden"
         }
-      ]
+      ],
+      "position": 1
     },
     {
       "id": "f0p37h0z",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 2,
       "title": "Integración Amdocs y Lowi",
       "assignee": "",
       "initialStartDate": "2026-07-01",
@@ -114,7 +116,7 @@
     {
       "id": "0qbh208s",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 3,
       "title": "Traductores",
       "assignee": "",
       "initialStartDate": "2026-07-01",
@@ -150,7 +152,7 @@
     {
       "id": "1orpt6kn",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 4,
       "title": "Dimensión",
       "assignee": "",
       "initialStartDate": "2026-07-07",
@@ -172,7 +174,7 @@
     {
       "id": "7ec0ykuc",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 5,
       "title": "Core KPI Venta Bruta Amdocs",
       "assignee": "",
       "progress": 0,
@@ -194,7 +196,7 @@
     {
       "id": "46ph2xqy",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 6,
       "title": "Core KPI Venta Bruta Lowi",
       "assignee": "",
       "progress": 0,
@@ -216,7 +218,7 @@
     {
       "id": "1mtup8c2",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 7,
       "title": "Validación Venta Bruta Amdocs",
       "assignee": "",
       "progress": 0,
@@ -231,7 +233,7 @@
     {
       "id": "5o1fspjc",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 8,
       "title": "Validación Venta Bruta Lowi",
       "assignee": "",
       "progress": 0,
@@ -246,7 +248,7 @@
     {
       "id": "1lm286nu",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 9,
       "title": "Validación Venta Bruta Amdocs + Lowi",
       "assignee": "",
       "progress": 0,
@@ -261,7 +263,7 @@
     {
       "id": "jydzm27e",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 10,
       "title": "Core KPI Venta Neta Amdocs",
       "assignee": "",
       "progress": 0,
@@ -276,7 +278,7 @@
     {
       "id": "akrajqwg",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 11,
       "title": "Core KPI Venta Neta Lowi",
       "assignee": "",
       "progress": 0,
@@ -291,7 +293,7 @@
     {
       "id": "3fc9z0df",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 12,
       "title": "Validación Venta Neta Amdocs",
       "assignee": "",
       "progress": 0,
@@ -306,7 +308,7 @@
     {
       "id": "oex92rdz",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 13,
       "title": "Validación Venta Neta Lowi",
       "assignee": "",
       "progress": 0,
@@ -321,7 +323,7 @@
     {
       "id": "myy6yxpy",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 14,
       "title": "Validación Venta Neta Amdocs + Lowi",
       "assignee": "",
       "progress": 0,
@@ -336,7 +338,7 @@
     {
       "id": "atcs9fz4",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 15,
       "title": "Core KPI Activaciones",
       "assignee": "",
       "progress": 0,
@@ -351,7 +353,7 @@
     {
       "id": "lx2gbaig",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 16,
       "title": "Validación Activaciones (Amdocs)",
       "assignee": "",
       "progress": 0,
@@ -362,7 +364,7 @@
     {
       "id": "dmry54v8",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 17,
       "title": "Validación Activaciones (Lowi)",
       "assignee": "",
       "progress": 0,
@@ -373,7 +375,7 @@
     {
       "id": "ixj9kcb8",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 18,
       "title": "Validación Activaciones (Amdocs + Lowi)",
       "assignee": "",
       "progress": 0,
@@ -384,7 +386,7 @@
     {
       "id": "x7eh75xc",
       "parentId": "if8824yl",
-      "position": null,
+      "position": 19,
       "title": "Orquestación",
       "assignee": "",
       "progress": 0,
@@ -395,7 +397,7 @@
     {
       "id": "sfltwu52",
       "parentId": null,
-      "position": 2,
+      "position": 3,
       "title": "Modelo Cartera (Fase 2)",
       "assignee": "",
       "progress": 0,
@@ -406,7 +408,7 @@
     {
       "id": "6yftfnce",
       "parentId": null,
-      "position": 3,
+      "position": 4,
       "title": "Modelo Provisión (Fase 1) entrega 2",
       "assignee": "",
       "progress": 0,
@@ -417,7 +419,7 @@
     {
       "id": "i2be2gy2",
       "parentId": null,
-      "position": 4,
+      "position": 2,
       "title": "Modelo Baja (Fase 3)",
       "assignee": "",
       "progress": 0,
