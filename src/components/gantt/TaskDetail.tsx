@@ -108,6 +108,37 @@ export function TaskDetail({
         />
       </div>
 
+      <div>
+        <div className="mb-1 flex items-center justify-between">
+          <Label className="text-[10px]">Progreso</Label>
+          <span className="text-xs font-medium">{task.progress}%</span>
+        </div>
+        <Slider
+          value={[task.progress]}
+          max={100}
+          step={5}
+          onValueChange={([v]) => store.update(task.id, { progress: v })}
+        />
+        <div className="mt-1 flex gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => store.update(task.id, { progress: 0 })}
+          >
+            Reiniciar
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => store.update(task.id, { progress: 100 })}
+          >
+            Completada
+          </Button>
+        </div>
+      </div>
+
       {/* Fechas section */}
       <div className="rounded border bg-muted/40">
         <button
@@ -315,37 +346,6 @@ export function TaskDetail({
             </div>
           </div>
         )}
-      </div>
-
-      <div>
-        <div className="mb-1 flex items-center justify-between">
-          <Label className="text-[10px]">Progreso</Label>
-          <span className="text-xs font-medium">{task.progress}%</span>
-        </div>
-        <Slider
-          value={[task.progress]}
-          max={100}
-          step={5}
-          onValueChange={([v]) => store.update(task.id, { progress: v })}
-        />
-        <div className="mt-1 flex gap-1.5">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px]"
-            onClick={() => store.update(task.id, { progress: 0 })}
-          >
-            Reiniciar
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px]"
-            onClick={() => store.update(task.id, { progress: 100 })}
-          >
-            Completada
-          </Button>
-        </div>
       </div>
 
       {/* Bloqueos section */}
