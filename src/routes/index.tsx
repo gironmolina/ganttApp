@@ -295,7 +295,7 @@ function Legend() {
   const items = [
     { c: "var(--status-progress)", l: "En progreso" },
     { c: "var(--status-complete)", l: "Completada", complete: true },
-    { c: "var(--status-partial)", l: "Bloqueo parcial" },
+    { c: "var(--status-blocked)", l: "Bloqueo parcial", partialBlock: true },
     { c: "var(--status-blocked)", l: "Bloqueo total" },
     { c: "var(--status-delayed)", l: "Retrasado" },
     { c: "black", l: "Planificación inicial", solid: true },
@@ -326,6 +326,14 @@ function Legend() {
             <span
               className="h-3 w-3 shrink-0 border-[3px] border-solid bg-transparent"
               style={{ borderColor: i.c }}
+            />
+          ) : "partialBlock" in i ? (
+            <span
+              className="h-3 w-3 shrink-0 border-l-2 border-r-2 border-solid"
+              style={{
+                borderColor: i.c,
+                backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 1.5px, ${i.c} 1.5px, ${i.c} 3px)`,
+              }}
             />
           ) : (
             <span className="h-3 w-3 shrink-0 rounded-sm" style={{ background: i.c }} />
