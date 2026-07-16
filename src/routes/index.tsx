@@ -55,16 +55,19 @@ function buildOrder(tasks: Task[], collapsed: Set<string>) {
   for (const arr of byParent.values()) arr.sort((a, b) => a.position - b.position);
   const order: Task[] = [];
   const depth: Record<string, number> = {};
+  const numbers: Record<string, string> = {};
   const walk = (parentId: string | null, d: number) => {
     const children = byParent.get(parentId) ?? [];
-    for (const c of children) {
+    for (let i = 0; i < children.length; i++) {
+      const c = children[i];
+      numbers[c.id] = parentId && numbers[parentId] ? `${numbers[parentId]}.${i + 1}` : `${i + 1}`;
       order.push(c);
       depth[c.id] = d;
       if (!collapsed.has(c.id)) walk(c.id, d + 1);
     }
   };
   walk(null, 0);
-  return { order, depth };
+  return { order, depth, numbers };
 }
 
 function Index() {
@@ -74,7 +77,7 @@ function Index() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const { order, depth } = useMemo(() => buildOrder(tasks, collapsed), [tasks, collapsed]);
+  const { order, depth, numbers } = useMemo(() => buildOrder(tasks, collapsed), [tasks, collapsed]);
   const selected = tasks.find((t) => t.id === selectedId) ?? null;
 
   // Cierra el editor al hacer click fuera, salvo si el click es en una barra de
@@ -225,6 +228,7 @@ function Index() {
             order={order}
             tasks={tasks}
             depth={depth}
+            numbers={numbers}
             collapsed={collapsed}
             toggleCollapse={toggleCollapse}
             onSelect={setSelectedId}

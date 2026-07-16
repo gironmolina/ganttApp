@@ -68,6 +68,7 @@ export function TaskList({
   order,
   tasks,
   depth,
+  numbers,
   collapsed,
   toggleCollapse,
   onSelect,
@@ -79,6 +80,7 @@ export function TaskList({
   order: Task[];
   tasks: Task[];
   depth: Record<string, number>;
+  numbers: Record<string, string>;
   collapsed: Set<string>;
   toggleCollapse: (id: string) => void;
   onSelect: (id: string) => void;
@@ -192,6 +194,7 @@ export function TaskList({
             <SortableRow
               task={task}
               depth={depth[task.id] ?? 0}
+              number={numbers[task.id] ?? ""}
               hasChildren={tasks.some((t) => t.parentId === task.id)}
               isCollapsed={collapsed.has(task.id)}
               isSelected={selectedId === task.id}
@@ -349,6 +352,7 @@ function ProjectTimeBar({
 function SortableRow({
   task,
   depth,
+  number,
   hasChildren,
   isCollapsed,
   isSelected,
@@ -360,6 +364,7 @@ function SortableRow({
 }: {
   task: Task;
   depth: number;
+  number: string;
   hasChildren: boolean;
   isCollapsed: boolean;
   isSelected: boolean;
@@ -417,6 +422,7 @@ function SortableRow({
         ) : (
           <span className="w-3" />
         )}
+        <span className="shrink-0 text-[10px] text-muted-foreground">{number}</span>
         <StatusIcon task={task} />
         <EditableTitle task={task} />
         {task.comments.length > 0 && (
