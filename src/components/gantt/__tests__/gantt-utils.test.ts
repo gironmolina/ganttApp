@@ -8,6 +8,7 @@ import {
   buildTimeline,
   buildSprints,
   findDateIndex,
+  computeTimeProgress,
   COL_WIDTH,
   WORKDAYS_PER_WEEK,
 } from "@/lib/gantt-utils";
@@ -238,5 +239,46 @@ describe("findDateIndex", () => {
     const { workdays, dateToIndex } = buildTimeline(tasks, "2026-05-04", "2026-05-08");
     const idx = findDateIndex("2020-01-01", "end", workdays, dateToIndex);
     expect(idx).toBe(0);
+  });
+});
+
+describe("computeTimeProgress", () => {
+  it("returns 50% at the midpoint of the project", () => {
+    const { percent } = computeTimeProgress("2026-05-01", "2026-05-11", "2026-05-06");
+    expect(percent).toBe(50);
+  });
+
+  it("clamps to 0% before the project starts", () => {
+    const { percent } = computeTimeProgress("2026-05-01", "2026-05-11", "2026-04-01");
+    expect(percent).toBe(0);
+  });
+
+  it("clamps to 100% after the project ends", () => {
+    const { percent } = computeTimeProgress("2026-05-01", "2026-05-11", "2026-06-01");
+    expect(percent).toBe(100);
+  });
+
+  it("computes inclusive total days", () => {
+    const { totalDays } = computeTimeProgress("2026-05-01", "2026-05-11", "2026-05-06");
+    expect(totalDays).toBe(11);
+  });
+
+  it("computes inclusive elapsed days up to today", () => {
+    const { elapsedDays } = computeTimeProgress("2026-05-01", "2026-05-11", "2026-05-06");
+    expect(elapsedDays).toBe(6);
+  });
+
+  it("returns zeros when start or end is missing", () => {
+    expect(computeTimeProgress("", "2026-05-11", "2026-05-06")).toEqual({
+      percent: 0,
+      elapsedDays: 0,
+      totalDays: 0,
+    });
+  });
+
+  it("handles a zero-length project without dividing by zero", () => {
+    const result = computeTimeProgress("2026-05-01", "2026-05-01", "2026-05-01");
+    expect(result.percent).toBe(0);
+    expect(result.totalDays).toBe(1);
   });
 });

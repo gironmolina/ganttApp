@@ -156,6 +156,30 @@ export function computeProgress(task: Task): number {
   return task.progress;
 }
 
+export interface TimeProgress {
+  percent: number;
+  elapsedDays: number;
+  totalDays: number;
+}
+
+export function computeTimeProgress(
+  startIso: string,
+  endIso: string,
+  todayIso: string,
+): TimeProgress {
+  if (!startIso || !endIso) return { percent: 0, elapsedDays: 0, totalDays: 0 };
+  const start = parseDate(startIso);
+  const end = parseDate(endIso);
+  const total = end - start;
+  if (total <= 0) return { percent: 0, elapsedDays: 0, totalDays: 1 };
+  const today = parseDate(todayIso);
+  const clampedToday = Math.min(Math.max(today, start), end);
+  const percent = Math.round(((clampedToday - start) / total) * 100);
+  const totalDays = Math.round(total / DAY_MS) + 1;
+  const elapsedDays = Math.round((clampedToday - start) / DAY_MS) + 1;
+  return { percent, elapsedDays, totalDays };
+}
+
 export function findDateIndex(
   iso: string,
   mode: "start" | "end",

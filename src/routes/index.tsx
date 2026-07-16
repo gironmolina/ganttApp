@@ -196,6 +196,8 @@ function Index() {
             onSelect={setSelectedId}
             onAddSubtask={addTask}
             selectedId={selectedId}
+            projectStart={settings.startDate}
+            projectEnd={settings.endDate}
           />
           <div className="space-y-2">
             <Legend />

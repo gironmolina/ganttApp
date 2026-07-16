@@ -1,5 +1,6 @@
-import { type Task, store as ganttStore } from "@/lib/gantt-store";
+import { type Task, store as ganttStore, todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
+import { computeTimeProgress, parseDate, fmtShort } from "@/lib/gantt-utils";
 import {
   CheckCircle2,
   AlertOctagon,
@@ -38,6 +39,8 @@ export function TaskList({
   onSelect,
   onAddSubtask,
   selectedId,
+  projectStart,
+  projectEnd,
 }: {
   order: Task[];
   tasks: Task[];
@@ -47,6 +50,8 @@ export function TaskList({
   onSelect: (id: string) => void;
   onAddSubtask: (parentId: string | null) => void;
   selectedId: string | null;
+  projectStart?: string;
+  projectEnd?: string;
 }) {
   const byParent = new Map<string | null, Task[]>();
   for (const t of order) {
@@ -124,7 +129,8 @@ export function TaskList({
         </Button>
       </div>
       <div className="rounded-lg border bg-card">
-        <div className="grid h-[74px] grid-cols-[1fr_90px_44px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        <ProjectTimeBar projectStart={projectStart} projectEnd={projectEnd} />
+        <div className="grid h-[30px] grid-cols-[1fr_90px_44px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           <div>Tarea</div>
           <div>Responsable</div>
           <div className="text-right">%</div>
@@ -132,6 +138,49 @@ export function TaskList({
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           {walk(null)}
         </DndContext>
+      </div>
+    </div>
+  );
+}
+
+function ProjectTimeBar({
+  projectStart,
+  projectEnd,
+}: {
+  projectStart?: string;
+  projectEnd?: string;
+}) {
+  if (!projectStart || !projectEnd) {
+    return <div className="h-[44px] border-b bg-muted/40" />;
+  }
+  const { percent, elapsedDays, totalDays } = computeTimeProgress(
+    projectStart,
+    projectEnd,
+    todayISO(),
+  );
+  const startLabel = fmtShort(new Date(parseDate(projectStart)));
+  const endLabel = fmtShort(new Date(parseDate(projectEnd)));
+
+  return (
+    <div className="flex h-[44px] flex-col justify-center gap-1 border-b bg-muted/40 px-2">
+      <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+        <span className="font-medium text-foreground">{startLabel}</span>
+        <span className="font-semibold text-[var(--status-progress)]">
+          {percent}% · {elapsedDays}/{totalDays} días
+        </span>
+        <span className="font-medium text-foreground">{endLabel}</span>
+      </div>
+      <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-[var(--status-progress)]"
+          style={{ width: `${percent}%` }}
+        />
+        {percent > 0 && percent < 100 && (
+          <div
+            className="absolute inset-y-0 w-px bg-[var(--today)]"
+            style={{ left: `${percent}%` }}
+          />
+        )}
       </div>
     </div>
   );
