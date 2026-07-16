@@ -294,7 +294,7 @@ function Stat({
 function Legend() {
   const items = [
     { c: "var(--status-progress)", l: "En progreso" },
-    { c: "var(--status-complete)", l: "Completada" },
+    { c: "var(--status-complete)", l: "Completada", complete: true },
     { c: "var(--status-partial)", l: "Bloqueo parcial" },
     { c: "var(--status-blocked)", l: "Bloqueo total" },
     { c: "var(--status-delayed)", l: "Retrasado" },
@@ -320,6 +320,11 @@ function Legend() {
           ) : "solid" in i ? (
             <span
               className="h-3 w-3 shrink-0 border-2 border-solid bg-transparent"
+              style={{ borderColor: i.c }}
+            />
+          ) : "complete" in i ? (
+            <span
+              className="h-3 w-3 shrink-0 border-[3px] border-solid bg-transparent"
               style={{ borderColor: i.c }}
             />
           ) : (
