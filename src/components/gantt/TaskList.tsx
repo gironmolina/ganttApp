@@ -111,28 +111,23 @@ export function TaskList({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex h-[40px] items-center justify-between overflow-hidden rounded-md border bg-card px-3">
-        <div className="text-sm font-semibold">Tareas</div>
+    <div className="space-y-1">
+      <div className="flex h-[34px] items-center justify-between overflow-hidden rounded-md border bg-card px-2">
+        <div className="text-xs font-semibold">Tareas</div>
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 px-2 text-xs"
+          className="h-6 px-1.5 text-[11px]"
           onClick={() => onAddSubtask(null)}
         >
-          <Plus className="mr-1 h-3.5 w-3.5" /> Nueva
+          <Plus className="mr-1 h-3 w-3" /> Nueva
         </Button>
       </div>
       <div className="rounded-lg border bg-card">
-        <div className="grid h-[44px] grid-cols-[1fr_120px_70px] items-center gap-2 border-b bg-muted/80 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="grid h-[40px] grid-cols-[1fr_90px_44px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           <div>Tarea</div>
           <div>Responsable</div>
           <div className="text-right">%</div>
-        </div>
-        <div className="grid h-[30px] grid-cols-[1fr_120px_70px] items-center gap-2 border-b bg-muted/60 px-3 text-[10px] text-muted-foreground">
-          <div>Nombre</div>
-          <div className="truncate">Responsable</div>
-          <div className="text-right">Progreso</div>
         </div>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           {walk(null)}
@@ -174,20 +169,20 @@ function SortableRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "grid h-10 cursor-pointer grid-cols-[1fr_120px_70px] items-center gap-2 border-b px-3 text-sm hover:bg-accent/30",
+        "grid h-8 cursor-pointer grid-cols-[1fr_90px_44px] items-center gap-1 border-b px-2 text-xs hover:bg-accent/30",
         isSelected && "bg-accent/50",
         isDragging && "z-10 bg-accent/20 shadow-md",
       )}
       onClick={() => onSelect(task.id)}
     >
-      <div className="flex min-w-0 items-center gap-1" style={{ paddingLeft: depth * 16 }}>
+      <div className="flex min-w-0 items-center gap-0.5" style={{ paddingLeft: depth * 12 }}>
         <button
           {...attributes}
           {...listeners}
-          className="cursor-grab touch-none rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
+          className="cursor-grab touch-none rounded p-0 text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical className="h-3.5 w-3.5" />
+          <GripVertical className="h-3 w-3" />
         </button>
         {hasChildren ? (
           <button
@@ -195,27 +190,27 @@ function SortableRow({
               e.stopPropagation();
               onToggleCollapse(task.id);
             }}
-            className="rounded p-0.5 hover:bg-muted"
+            className="rounded p-0 hover:bg-muted"
           >
             {isCollapsed ? (
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-3 w-3" />
             ) : (
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="h-3 w-3" />
             )}
           </button>
         ) : (
-          <span className="w-4" />
+          <span className="w-3" />
         )}
         <StatusIcon task={task} />
         <EditableTitle task={task} />
         {task.comments.length > 0 && (
-          <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-            <MessageSquare className="h-3 w-3" /> {task.comments.length}
+          <span className="inline-flex items-center gap-0.5 text-[9px] text-muted-foreground">
+            <MessageSquare className="h-2.5 w-2.5" /> {task.comments.length}
           </span>
         )}
       </div>
-      <div className="truncate text-xs text-muted-foreground">{task.assignee || "—"}</div>
-      <div className="text-right text-xs font-medium">{task.progress}%</div>
+      <div className="truncate text-[11px] text-muted-foreground">{task.assignee || "—"}</div>
+      <div className="text-right text-[11px] font-medium">{task.progress}%</div>
     </div>
   );
 }
@@ -250,7 +245,7 @@ function EditableTitle({ task }: { task: Task }) {
   return (
     <input
       ref={inputRef}
-      className="h-6 min-w-0 flex-1 rounded border bg-background px-1 text-sm outline-none ring-1 ring-ring"
+      className="h-5 min-w-0 flex-1 rounded border bg-background px-1 text-xs outline-none ring-1 ring-ring"
       value={draft}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={() => {
@@ -277,16 +272,19 @@ function EditableTitle({ task }: { task: Task }) {
 function StatusIcon({ task }: { task: Task }) {
   if (task.progress >= 100)
     return (
-      <CheckCircle2 className="h-4 w-4 text-[var(--status-complete)]" aria-label="Completada" />
+      <CheckCircle2 className="h-3.5 w-3.5 text-[var(--status-complete)]" aria-label="Completada" />
     );
   if (task.blocks.some((b) => b.type === "total"))
     return (
-      <AlertOctagon className="h-4 w-4 text-[var(--status-blocked)]" aria-label="Bloqueo total" />
+      <AlertOctagon
+        className="h-3.5 w-3.5 text-[var(--status-blocked)]"
+        aria-label="Bloqueo total"
+      />
     );
   if (task.blocks.some((b) => b.type === "partial"))
     return (
       <AlertTriangle
-        className="h-4 w-4 text-[var(--status-partial)]"
+        className="h-3.5 w-3.5 text-[var(--status-partial)]"
         aria-label="Bloqueo parcial"
       />
     );

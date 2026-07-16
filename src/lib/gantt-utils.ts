@@ -2,7 +2,7 @@ import type { Task } from "@/lib/gantt-store";
 
 export const DAY_MS = 86400000;
 export const COL_WIDTH = 40;
-export const ROW_HEIGHT = 40;
+export const ROW_HEIGHT = 32;
 export const WORKDAYS_PER_WEEK = 5;
 
 export function parseDate(s: string) {

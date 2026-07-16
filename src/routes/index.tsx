@@ -185,8 +185,8 @@ function Index() {
         </div>
       </header>
 
-      <main className="px-6 py-6">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)]">
+      <main className="px-4 py-4">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
           <TaskList
             order={order}
             tasks={tasks}
