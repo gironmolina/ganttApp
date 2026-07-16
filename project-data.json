@@ -174,14 +174,14 @@
         {
           "id": "phwov8rw",
           "type": "total",
-          "startDate": "2026-07-10",
-          "endDate": "2026-07-10"
+          "startDate": "2026-07-09",
+          "endDate": "2026-07-09"
         }
       ],
       "comments": [],
       "createdAt": "2026-07-16",
-      "initialStartDate": "2026-07-10",
-      "initialEndDate": "2026-07-15",
+      "initialStartDate": "2026-07-09",
+      "initialEndDate": "2026-07-14",
       "estimatedStartDate": "2026-08-03",
       "estimatedEndDate": "2026-08-14"
     },
@@ -218,9 +218,9 @@
       "comments": [],
       "createdAt": "2026-07-16",
       "initialStartDate": "2026-07-16",
-      "initialEndDate": "2026-08-06",
+      "initialEndDate": "2026-08-03",
       "estimatedStartDate": "2026-07-16",
-      "estimatedEndDate": "2026-08-06"
+      "estimatedEndDate": "2026-08-03"
     },
     {
       "id": "5o1fspjc",

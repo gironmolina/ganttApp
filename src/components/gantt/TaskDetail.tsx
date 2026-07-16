@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { store, type Task, type BlockRange } from "@/lib/gantt-store";
+import { countWorkdays } from "@/lib/gantt-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -214,6 +215,9 @@ export function TaskDetail({
                   )}
                 </div>
               </div>
+              {task.initialStartDate && task.initialEndDate && (
+                <p className="text-[9px] text-muted-foreground">{(() => { const d = countWorkdays(task.initialStartDate, task.initialEndDate); return `${d} ${d === 1 ? "día" : "días"}`; })()}</p>
+              )}
             </div>
 
             <div className="border-b" />
@@ -284,6 +288,9 @@ export function TaskDetail({
                 </div>
               </div>
               )}
+              {task.estimatedStartDate && task.estimatedEndDate && (
+                <p className="text-[9px] text-muted-foreground">{(() => { const d = countWorkdays(task.estimatedStartDate, task.estimatedEndDate); return `${d} ${d === 1 ? "día" : "días"}`; })()}</p>
+              )}
             </div>
 
             <div className="border-b" />
@@ -352,6 +359,9 @@ export function TaskDetail({
                     )}
                   </div>
                 </div>
+              )}
+              {task.actualStartDate && task.actualEndDate && (
+                <p className="text-[9px] text-muted-foreground">{(() => { const d = countWorkdays(task.actualStartDate, task.actualEndDate); return `${d} ${d === 1 ? "día" : "días"}`; })()}</p>
               )}
             </div>
           </div>
@@ -486,6 +496,9 @@ export function TaskDetail({
                       )}
                     </div>
                   </div>
+                  {block.startDate && block.endDate && (
+                    <p className="text-[9px] text-muted-foreground">{(() => { const d = countWorkdays(block.startDate, block.endDate); return `${d} ${d === 1 ? "día" : "días"}`; })()}</p>
+                  )}
                   <Input
                     className="h-6 text-[10px]"
                     placeholder="Motivo del bloqueo (opcional)"
