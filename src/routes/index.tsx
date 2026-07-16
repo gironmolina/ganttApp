@@ -293,15 +293,15 @@ function Stat({
 
 function Legend() {
   const items = [
-    { c: "var(--status-progress)", l: "On track" },
+    { c: "var(--status-progress)", l: "Barra de tarea" },
     { c: "var(--status-complete)", l: "Completada", complete: true },
+    { c: "black", l: "Planificación inicial", solid: true },
+    { c: "rgb(156,163,175)", l: "Estimada", dash: true },
     { c: "var(--status-blocked)", l: "Bloqueo parcial", partialBlock: true },
     { c: "var(--status-blocked)", l: "Bloqueo total" },
     { c: "var(--status-delayed)", l: "Retrasado" },
-    { c: "black", l: "Planificación inicial", solid: true },
-    { c: "rgb(156,163,175)", l: "Estimada", dash: true },
     { c: "var(--today)", l: "Retraso inicio", arrow: true },
-    { c: "var(--today)", l: "Hoy" },
+    { l: "Fuera de proyecto", overtime: true },
   ];
   return (
     <div className="flex h-[40px] flex-wrap items-center gap-3 rounded-md border bg-card px-3 text-xs">
@@ -333,6 +333,14 @@ function Legend() {
               style={{
                 borderColor: i.c,
                 backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 1.5px, ${i.c} 1.5px, ${i.c} 3px)`,
+              }}
+            />
+          ) : "overtime" in i ? (
+            <span
+              className="h-3 w-3 shrink-0 border-l-2 border-r-2 border-solid"
+              style={{
+                borderColor: "oklch(0.7 0.15 50 / 0.5)",
+                backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 1.5px, oklch(0.7 0.15 50 / 0.3) 1.5px, oklch(0.7 0.15 50 / 0.3) 3px)`,
               }}
             />
           ) : (
