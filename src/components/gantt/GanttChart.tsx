@@ -361,7 +361,7 @@ export function GanttChart({
                 {/* Initial bar — zIndex 5, dashed black */}
                 {hasInitial && (
                   <div
-                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-dashed bg-transparent border-black/60"
+                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-solid bg-transparent border-black/60"
                     style={{ left: iLeft, width: iWidth, height: 22, zIndex: 5 }}
                   />
                 )}

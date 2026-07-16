@@ -298,7 +298,7 @@ function Legend() {
     { c: "var(--status-partial)", l: "Bloqueo parcial" },
     { c: "var(--status-blocked)", l: "Bloqueo total" },
     { c: "var(--status-delayed)", l: "Retrasado" },
-    { c: "black", l: "Planificación inicial", dash: true },
+    { c: "black", l: "Planificación inicial", solid: true },
     { c: "rgb(156,163,175)", l: "Estimada", dash: true },
     { c: "var(--today)", l: "Retraso inicio", arrow: true },
     { c: "var(--today)", l: "Hoy" },
@@ -315,6 +315,11 @@ function Legend() {
           ) : "dash" in i ? (
             <span
               className="h-3 w-3 shrink-0 border-2 border-dashed bg-transparent"
+              style={{ borderColor: i.c }}
+            />
+          ) : "solid" in i ? (
+            <span
+              className="h-3 w-3 shrink-0 border-2 border-solid bg-transparent"
               style={{ borderColor: i.c }}
             />
           ) : (
