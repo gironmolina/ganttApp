@@ -28,7 +28,7 @@ export function GanttChart({
   projectStart?: string;
   projectEnd?: string;
 }) {
-  const { workdays, dateToIndex, weekStarts } = useMemo(
+  const { workdays, dateToIndex, weekStarts, projectEndIdx } = useMemo(
     () => buildTimeline(tasks, projectStart, projectEnd),
     [tasks, projectStart, projectEnd],
   );
@@ -115,6 +115,18 @@ export function GanttChart({
               />
             ))}
           </div>
+
+          {/* Overtime zone (after project end) */}
+          {projectEndIdx !== undefined && projectEndIdx + 1 < workdays.length && (
+            <div
+              className="pointer-events-none absolute top-0 h-full"
+              style={{
+                left: (projectEndIdx + 1) * COL_WIDTH,
+                right: 0,
+                backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 4px, oklch(0.7 0.15 50 / 0.15) 4px, oklch(0.7 0.15 50 / 0.15) 8px)`,
+              }}
+            />
+          )}
 
           {order.map((task, rowIdx) => {
             const progress = computeProgress(task);

@@ -216,7 +216,12 @@ export function TaskDetail({
                 </div>
               </div>
               {task.initialStartDate && task.initialEndDate && (
-                <p className="text-[9px] text-muted-foreground">{(() => { const d = countWorkdays(task.initialStartDate, task.initialEndDate); return `${d} ${d === 1 ? "día" : "días"}`; })()}</p>
+                <p className="text-[9px] text-muted-foreground">
+                  {(() => {
+                    const d = countWorkdays(task.initialStartDate, task.initialEndDate);
+                    return `${d} ${d === 1 ? "día" : "días"}`;
+                  })()}
+                </p>
               )}
             </div>
 
@@ -248,48 +253,57 @@ export function TaskDetail({
                   Primero define las fechas de planificación inicial.
                 </p>
               ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-[9px]">Inicio estimada</Label>
-                  <DatePicker
-                    value={task.estimatedStartDate ?? ""}
-                    min={parent?.estimatedStartDate ?? parent?.initialStartDate ?? projectStartDate}
-                    onChange={(v) => {
-                      const patch: Partial<Task> = { estimatedStartDate: v || undefined };
-                      if (!v && task.estimatedEndDate) {
-                        patch.estimatedEndDate = undefined;
-                      }
-                      if (v && task.estimatedEndDate && task.estimatedEndDate < v) {
-                        patch.estimatedEndDate = undefined;
-                      }
-                      store.update(task.id, patch);
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label className="text-[9px]">Fin estimada</Label>
-                  {task.estimatedStartDate ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[9px]">Inicio estimada</Label>
                     <DatePicker
-                      value={task.estimatedEndDate ?? ""}
-                      min={task.estimatedStartDate}
-                      focusMonth={task.estimatedStartDate}
-                      onChange={(v) => store.update(task.id, { estimatedEndDate: v || undefined })}
+                      value={task.estimatedStartDate ?? ""}
+                      min={
+                        parent?.estimatedStartDate ?? parent?.initialStartDate ?? projectStartDate
+                      }
+                      onChange={(v) => {
+                        const patch: Partial<Task> = { estimatedStartDate: v || undefined };
+                        if (!v && task.estimatedEndDate) {
+                          patch.estimatedEndDate = undefined;
+                        }
+                        if (v && task.estimatedEndDate && task.estimatedEndDate < v) {
+                          patch.estimatedEndDate = undefined;
+                        }
+                        store.update(task.id, patch);
+                      }}
                     />
-                  ) : (
-                    <Button
-                      variant="outline"
-                      className="h-7 w-full justify-start font-normal text-[10px] text-muted-foreground"
-                      disabled
-                    >
-                      <CalendarIcon className="mr-1 h-3 w-3" />
-                      Primero inicio
-                    </Button>
-                  )}
+                  </div>
+                  <div>
+                    <Label className="text-[9px]">Fin estimada</Label>
+                    {task.estimatedStartDate ? (
+                      <DatePicker
+                        value={task.estimatedEndDate ?? ""}
+                        min={task.estimatedStartDate}
+                        focusMonth={task.estimatedStartDate}
+                        onChange={(v) =>
+                          store.update(task.id, { estimatedEndDate: v || undefined })
+                        }
+                      />
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="h-7 w-full justify-start font-normal text-[10px] text-muted-foreground"
+                        disabled
+                      >
+                        <CalendarIcon className="mr-1 h-3 w-3" />
+                        Primero inicio
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
               )}
               {task.estimatedStartDate && task.estimatedEndDate && (
-                <p className="text-[9px] text-muted-foreground">{(() => { const d = countWorkdays(task.estimatedStartDate, task.estimatedEndDate); return `${d} ${d === 1 ? "día" : "días"}`; })()}</p>
+                <p className="text-[9px] text-muted-foreground">
+                  {(() => {
+                    const d = countWorkdays(task.estimatedStartDate, task.estimatedEndDate);
+                    return `${d} ${d === 1 ? "día" : "días"}`;
+                  })()}
+                </p>
               )}
             </div>
 
@@ -361,7 +375,12 @@ export function TaskDetail({
                 </div>
               )}
               {task.actualStartDate && task.actualEndDate && (
-                <p className="text-[9px] text-muted-foreground">{(() => { const d = countWorkdays(task.actualStartDate, task.actualEndDate); return `${d} ${d === 1 ? "día" : "días"}`; })()}</p>
+                <p className="text-[9px] text-muted-foreground">
+                  {(() => {
+                    const d = countWorkdays(task.actualStartDate, task.actualEndDate);
+                    return `${d} ${d === 1 ? "día" : "días"}`;
+                  })()}
+                </p>
               )}
             </div>
           </div>
@@ -497,7 +516,12 @@ export function TaskDetail({
                     </div>
                   </div>
                   {block.startDate && block.endDate && (
-                    <p className="text-[9px] text-muted-foreground">{(() => { const d = countWorkdays(block.startDate, block.endDate); return `${d} ${d === 1 ? "día" : "días"}`; })()}</p>
+                    <p className="text-[9px] text-muted-foreground">
+                      {(() => {
+                        const d = countWorkdays(block.startDate, block.endDate);
+                        return `${d} ${d === 1 ? "día" : "días"}`;
+                      })()}
+                    </p>
                   )}
                   <Input
                     className="h-6 text-[10px]"

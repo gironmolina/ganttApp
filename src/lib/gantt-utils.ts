@@ -49,6 +49,7 @@ export interface TimelineResult {
   workdays: Date[];
   dateToIndex: Map<string, number>;
   weekStarts: number[];
+  projectEndIdx?: number;
 }
 
 export function buildTimeline(
@@ -61,6 +62,12 @@ export function buildTimeline(
   if (projectStart && projectEnd) {
     mn = parseDate(projectStart);
     mx = parseDate(projectEnd);
+    for (const t of tasks) {
+      if (t.initialEndDate) mx = Math.max(mx, parseDate(t.initialEndDate));
+      if (t.estimatedEndDate) mx = Math.max(mx, parseDate(t.estimatedEndDate));
+      if (t.actualEndDate) mx = Math.max(mx, parseDate(t.actualEndDate));
+    }
+    mx += DAY_MS * 5;
   } else if (tasks.length === 0) {
     mn = Date.now();
     mx = mn + DAY_MS * 20;
@@ -108,7 +115,8 @@ export function buildTimeline(
     map.set(toLocalIso(next), days.length);
     days.push(new Date(next.getTime()));
   }
-  return { workdays: days, dateToIndex: map, weekStarts: weekIdxs };
+  const projectEndIdx = projectEnd ? map.get(projectEnd) : undefined;
+  return { workdays: days, dateToIndex: map, weekStarts: weekIdxs, projectEndIdx };
 }
 
 export interface Sprint {
