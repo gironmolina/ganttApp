@@ -293,7 +293,7 @@ function Stat({
 
 function Legend() {
   const items = [
-    { c: "var(--status-progress)", l: "En progreso" },
+    { c: "var(--status-progress)", l: "On track" },
     { c: "var(--status-complete)", l: "Completada", complete: true },
     { c: "var(--status-blocked)", l: "Bloqueo parcial", partialBlock: true },
     { c: "var(--status-blocked)", l: "Bloqueo total" },
