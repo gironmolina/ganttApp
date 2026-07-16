@@ -545,7 +545,11 @@ export function TaskDetail({
                   className="h-5 px-1.5 text-[9px]"
                   onClick={() => {
                     if (!commentText.trim()) return;
-                    store.addComment(task.id, commentAuthor.trim() || "Anónimo", commentText.trim());
+                    store.addComment(
+                      task.id,
+                      commentAuthor.trim() || "Anónimo",
+                      commentText.trim(),
+                    );
                     setCommentText("");
                   }}
                 >

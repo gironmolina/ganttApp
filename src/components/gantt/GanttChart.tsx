@@ -191,6 +191,28 @@ export function GanttChart({
             // Which bar is clickable (prefer estimated, fallback to initial)
             const clickBar = hasEstimated ? "estimated" : hasInitial ? "initial" : null;
 
+            // Union of all drawn bar segments — used for a full clickable area
+            const drawnLefts: number[] = [];
+            const drawnRights: number[] = [];
+            if (hasInitial) {
+              drawnLefts.push(iLeft);
+              drawnRights.push(iLeft + iWidth);
+            }
+            if (hasEstimated) {
+              drawnLefts.push(eLeft);
+              drawnRights.push(eLeft + eWidth);
+            }
+            if (hasActual) {
+              drawnLefts.push(aLeft);
+              drawnRights.push(aLeft + aWidth);
+            }
+            if (isDelayed && effectiveDelayWidth > 0) {
+              drawnRights.push(effectiveDelayLeft + effectiveDelayWidth);
+            }
+            const barUnionLeft = drawnLefts.length ? Math.min(...drawnLefts) : 0;
+            const barUnionRight = drawnRights.length ? Math.max(...drawnRights) : 0;
+            const barUnionWidth = barUnionRight - barUnionLeft;
+
             return (
               <div
                 key={task.id}
@@ -215,9 +237,21 @@ export function GanttChart({
                   ))}
                 </div>
 
+                {/* Clickable area covering all drawn bar segments — zIndex 0 */}
+                {barUnionWidth > 0 && (
+                  <button
+                    data-task-bar
+                    onClick={() => onSelect(task.id)}
+                    aria-label={`Editar ${task.title}`}
+                    className="absolute top-1/2 -translate-y-1/2 cursor-pointer bg-transparent"
+                    style={{ left: barUnionLeft, width: barUnionWidth, height: 22, zIndex: 0 }}
+                  />
+                )}
+
                 {/* Actual bar — zIndex 1 */}
                 {hasActual && (
                   <button
+                    data-task-bar
                     onClick={() => onSelect(task.id)}
                     className={cn(
                       "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden text-left text-xs text-white shadow-sm transition hover:brightness-110",
@@ -301,6 +335,7 @@ export function GanttChart({
                     />
                   ) : (
                     <div
+                      data-task-bar
                       onClick={() => onSelect(task.id)}
                       className={cn(
                         "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden border-2 border-dashed bg-transparent border-gray-400 text-left text-xs transition hover:brightness-110",

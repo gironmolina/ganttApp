@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { store, useTasks, type Task, todayISO } from "@/lib/gantt-store";
 import { useSettings } from "@/lib/settings-store";
 import { GanttChart } from "@/components/gantt/GanttChart";
@@ -28,6 +28,22 @@ export const Route = createFileRoute("/")({
   }),
   component: Index,
 });
+
+function isScrollbarMouseDown(e: MouseEvent): boolean {
+  let el = e.target as HTMLElement | null;
+  while (el && el !== document.body) {
+    const canScrollY = el.scrollHeight > el.clientHeight;
+    const canScrollX = el.scrollWidth > el.clientWidth;
+    if (canScrollY || canScrollX) {
+      const rect = el.getBoundingClientRect();
+      const onVertical = canScrollY && e.clientX >= rect.left + el.clientWidth;
+      const onHorizontal = canScrollX && e.clientY >= rect.top + el.clientHeight;
+      if (onVertical || onHorizontal) return true;
+    }
+    el = el.parentElement;
+  }
+  return false;
+}
 
 function buildOrder(tasks: Task[], collapsed: Set<string>) {
   const byParent = new Map<string | null, Task[]>();
@@ -60,6 +76,24 @@ function Index() {
 
   const { order, depth } = useMemo(() => buildOrder(tasks, collapsed), [tasks, collapsed]);
   const selected = tasks.find((t) => t.id === selectedId) ?? null;
+
+  // Cierra el editor al hacer click fuera, salvo si el click es en una barra de
+  // tarea, en una fila del listado, dentro del propio editor, o en una barra de
+  // scroll (para permitir desplazar el Gantt sin cerrar el editor).
+  useEffect(() => {
+    if (!selectedId) return;
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest("[data-task-editor]")) return;
+      if (target.closest("[data-task-bar]")) return;
+      if (target.closest("[data-task-row]")) return;
+      if (isScrollbarMouseDown(e)) return;
+      setSelectedId(null);
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [selectedId]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -214,20 +248,18 @@ function Index() {
       </main>
 
       {selected && (
-        <div className="fixed inset-0 z-40" onMouseDown={() => setSelectedId(null)}>
-          <aside
-            className="ml-auto h-screen w-full max-w-md border-l bg-card shadow-xl animate-in slide-in-from-right"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <TaskDetail
-              task={selected}
-              allTasks={tasks}
-              onClose={() => setSelectedId(null)}
-              onAddSubtask={(pid) => addTask(pid)}
-              projectStartDate={settings.startDate}
-            />
-          </aside>
-        </div>
+        <aside
+          data-task-editor
+          className="fixed right-0 top-0 z-40 h-screen w-full max-w-md border-l bg-card shadow-xl animate-in slide-in-from-right"
+        >
+          <TaskDetail
+            task={selected}
+            allTasks={tasks}
+            onClose={() => setSelectedId(null)}
+            onAddSubtask={(pid) => addTask(pid)}
+            projectStartDate={settings.startDate}
+          />
+        </aside>
       )}
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} />

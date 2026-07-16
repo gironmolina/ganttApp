@@ -217,6 +217,7 @@ function SortableRow({
     <div
       ref={setNodeRef}
       style={style}
+      data-task-row
       className={cn(
         "grid h-8 cursor-pointer grid-cols-[1fr_90px_44px] items-center gap-1 border-b px-2 text-xs hover:bg-accent/30",
         isSelected && "bg-accent/50",
