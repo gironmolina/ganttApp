@@ -147,17 +147,6 @@
       "actualEndDate": "2026-07-27"
     },
     {
-      "id": "lz2lku9y",
-      "parentId": null,
-      "position": 2,
-      "title": "Nueva tarea",
-      "assignee": "",
-      "progress": 0,
-      "blocks": [],
-      "comments": [],
-      "createdAt": "2026-07-16"
-    },
-    {
       "id": "1orpt6kn",
       "parentId": "if8824yl",
       "position": null,
@@ -206,6 +195,72 @@
       "parentId": "if8824yl",
       "position": null,
       "title": "Core KPI Venta Bruta Lowi",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "1mtup8c2",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Validación Venta Bruta Amdocs",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "5o1fspjc",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Validación Venta Bruta Lowi",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "1lm286nu",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Validación Venta Bruta Amdocs + Lowi",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "jydzm27e",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Core KPI Venta Neta Amdocs",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "akrajqwg",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Core KPI Venta Neta Lowi",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "3fc9z0df",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Validación Venta Neta Amdocs",
       "assignee": "",
       "progress": 0,
       "blocks": [],
