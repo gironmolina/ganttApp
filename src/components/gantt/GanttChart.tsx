@@ -254,7 +254,7 @@ export function GanttChart({
                     data-task-bar
                     onClick={() => onSelect(task.id)}
                     className={cn(
-                      "group absolute top-1/2 flex -translate-y-1/2 items-center overflow-hidden text-left text-xs text-white shadow-sm transition hover:brightness-110",
+                      "group absolute top-1/2 flex -translate-y-1/2 cursor-pointer items-center overflow-hidden text-left text-xs text-white shadow-sm transition hover:brightness-110",
                       barBgColor,
                       isParent && "opacity-90 ring-1 ring-white/30",
                     )}
