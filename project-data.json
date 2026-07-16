@@ -123,15 +123,76 @@
       "blocks": [
         {
           "id": "kh2il6fj",
+          "type": "partial",
+          "startDate": "2026-07-09",
+          "endDate": "2026-07-22"
+        },
+        {
+          "id": "sr6s8pbk",
           "type": "total",
-          "startDate": "2026-07-01",
-          "endDate": "2026-07-01"
+          "startDate": "2026-07-16",
+          "endDate": "2026-07-17"
         }
       ],
       "comments": [],
       "createdAt": "2026-07-15",
       "actualStartDate": "2026-07-09",
       "actualEndDate": "2026-07-27"
+    },
+    {
+      "id": "lz2lku9y",
+      "parentId": null,
+      "position": 2,
+      "title": "Nueva tarea",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "1orpt6kn",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Dimensión",
+      "assignee": "",
+      "initialStartDate": "2026-07-07",
+      "initialEndDate": "2026-07-09",
+      "estimatedStartDate": "2026-07-22",
+      "estimatedEndDate": "2026-07-27",
+      "progress": 0,
+      "blocks": [
+        {
+          "id": "vyasjo64",
+          "type": "partial",
+          "startDate": "2026-07-22",
+          "endDate": "2026-07-22"
+        }
+      ],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "7ec0ykuc",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Core KPI Venta Bruta Amdocs",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "46ph2xqy",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Core KPI Venta Bruta Lowi",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
     }
   ],
   "settings": {

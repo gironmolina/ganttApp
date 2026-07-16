@@ -178,15 +178,15 @@ export function GanttChart({
             const normalLeft = aLeft;
             const normalWidth = isDelayed ? Math.max(0, delayLeft - aLeft) : aWidth;
 
-            // Start delay arrow (actualStartDate > estimatedStartDate)
+            // Start delay arrow (estimatedStartDate > initialStartDate)
             const isStartDelayed =
-              hasActual &&
+              hasEstimated &&
               hasInitial &&
-              !!task.actualStartDate &&
+              !!task.estimatedStartDate &&
               !!task.initialStartDate &&
-              task.actualStartDate > task.initialStartDate;
+              task.estimatedStartDate > task.initialStartDate;
             const startDelayLeft = isStartDelayed ? iLeft : 0;
-            const startDelayWidth = isStartDelayed ? aLeft - iLeft : 0;
+            const startDelayWidth = isStartDelayed ? eLeft - iLeft : 0;
 
             // Which bar is clickable (prefer estimated, fallback to initial)
             const clickBar = hasEstimated ? "estimated" : hasInitial ? "initial" : null;
