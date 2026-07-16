@@ -60,20 +60,7 @@
       "estimatedStartDate": "2026-06-22",
       "estimatedEndDate": "2026-06-30",
       "progress": 95,
-      "comments": [
-        {
-          "id": "3bq12b1w",
-          "author": "sdf",
-          "text": "dsfa",
-          "createdAt": "2026-07-16T12:21:55.911Z"
-        },
-        {
-          "id": "pzs5si1b",
-          "author": "sdf",
-          "text": "dfsfs",
-          "createdAt": "2026-07-16T12:22:04.515Z"
-        }
-      ],
+      "comments": [],
       "createdAt": "2026-07-14",
       "actualStartDate": "2026-06-22",
       "actualEndDate": "2026-07-10",
