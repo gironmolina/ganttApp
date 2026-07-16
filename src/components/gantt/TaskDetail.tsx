@@ -538,17 +538,20 @@ export function TaskDetail({
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
               />
-              <Button
-                size="sm"
-                className="h-6 px-2 text-[10px]"
-                onClick={() => {
-                  if (!commentText.trim()) return;
-                  store.addComment(task.id, commentAuthor.trim() || "Anónimo", commentText.trim());
-                  setCommentText("");
-                }}
-              >
-                <MessageSquarePlus className="mr-1 h-3 w-3" /> Añadir
-              </Button>
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-5 px-1.5 text-[9px]"
+                  onClick={() => {
+                    if (!commentText.trim()) return;
+                    store.addComment(task.id, commentAuthor.trim() || "Anónimo", commentText.trim());
+                    setCommentText("");
+                  }}
+                >
+                  <Plus className="mr-0.5 h-2.5 w-2.5" /> Añadir
+                </Button>
+              </div>
             </div>
           </div>
         )}

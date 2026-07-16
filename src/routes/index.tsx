@@ -214,15 +214,20 @@ function Index() {
       </main>
 
       {selected && (
-        <aside className="fixed right-0 top-0 z-40 h-screen w-full max-w-md border-l bg-card shadow-xl animate-in slide-in-from-right">
-          <TaskDetail
-            task={selected}
-            allTasks={tasks}
-            onClose={() => setSelectedId(null)}
-            onAddSubtask={(pid) => addTask(pid)}
-            projectStartDate={settings.startDate}
-          />
-        </aside>
+        <div className="fixed inset-0 z-40" onMouseDown={() => setSelectedId(null)}>
+          <aside
+            className="ml-auto h-screen w-full max-w-md border-l bg-card shadow-xl animate-in slide-in-from-right"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <TaskDetail
+              task={selected}
+              allTasks={tasks}
+              onClose={() => setSelectedId(null)}
+              onAddSubtask={(pid) => addTask(pid)}
+              projectStartDate={settings.startDate}
+            />
+          </aside>
+        </div>
       )}
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} />

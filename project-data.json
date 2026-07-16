@@ -60,7 +60,14 @@
       "estimatedStartDate": "2026-06-22",
       "estimatedEndDate": "2026-06-30",
       "progress": 95,
-      "comments": [],
+      "comments": [
+        {
+          "id": "9r3909cn",
+          "author": "sdf",
+          "text": "asdfasdf",
+          "createdAt": "2026-07-16T12:36:22.379Z"
+        }
+      ],
       "createdAt": "2026-07-14",
       "actualStartDate": "2026-06-22",
       "actualEndDate": "2026-07-10",
