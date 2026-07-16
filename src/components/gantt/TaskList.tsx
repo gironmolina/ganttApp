@@ -1,6 +1,6 @@
 import { type Task, store as ganttStore, todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
-import { computeTimeProgress, parseDate, fmtShort } from "@/lib/gantt-utils";
+import { computeTimeProgress, parseDate, fmtShort, countWorkdays, toLocalIso } from "@/lib/gantt-utils";
 import {
   CheckCircle2,
   AlertOctagon,
@@ -267,7 +267,7 @@ export function TaskList({
         </div>
       </div>
       <div className="rounded-lg border bg-card">
-        <ProjectTimeBar projectStart={projectStart} projectEnd={projectEnd} />
+        <ProjectTimeBar projectStart={projectStart} projectEnd={projectEnd} tasks={tasks} />
         <div
           className="grid h-[30px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
           style={gridStyle}
@@ -309,9 +309,11 @@ export function TaskList({
 function ProjectTimeBar({
   projectStart,
   projectEnd,
+  tasks,
 }: {
   projectStart?: string;
   projectEnd?: string;
+  tasks: Task[];
 }) {
   if (!projectStart || !projectEnd) {
     return <div className="h-[44px] border-b bg-muted/40" />;
@@ -324,24 +326,54 @@ function ProjectTimeBar({
   const startLabel = fmtShort(new Date(parseDate(projectStart)));
   const endLabel = fmtShort(new Date(parseDate(projectEnd)));
 
+  let maxEndMs = parseDate(projectEnd);
+  for (const t of tasks) {
+    if (t.initialEndDate) maxEndMs = Math.max(maxEndMs, parseDate(t.initialEndDate));
+    if (t.estimatedEndDate) maxEndMs = Math.max(maxEndMs, parseDate(t.estimatedEndDate));
+    if (t.actualEndDate) maxEndMs = Math.max(maxEndMs, parseDate(t.actualEndDate));
+  }
+  const projectEndMs = parseDate(projectEnd);
+  const projectStartMs = parseDate(projectStart);
+  const hasExtra = maxEndMs > projectEndMs;
+  const extraDays = hasExtra ? countWorkdays(projectEnd, toLocalIso(new Date(maxEndMs))) : 0;
+
+  const totalSpanMs = maxEndMs - projectStartMs;
+  const projectWidthPercent = hasExtra
+    ? Math.round(((projectEndMs - projectStartMs) / totalSpanMs) * 100)
+    : 100;
+  const fillWidthPercent = (percent / 100) * projectWidthPercent;
+
   return (
     <div className="flex h-[44px] flex-col justify-center gap-1 border-b bg-muted/40 px-2">
       <div className="flex items-center justify-between text-[9px] text-muted-foreground">
         <span className="font-medium text-foreground">{startLabel}</span>
         <span className="font-semibold text-[var(--status-progress)]">
           {percent}% · {elapsedDays}/{totalDays} días
+          {hasExtra && (
+            <span className="text-[var(--status-delayed)]"> · +{extraDays} días extra</span>
+          )}
         </span>
         <span className="font-medium text-foreground">{endLabel}</span>
       </div>
       <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-[var(--status-progress)]"
-          style={{ width: `${percent}%` }}
+          style={{ width: `${fillWidthPercent}%` }}
         />
+        {hasExtra && (
+          <div
+            className="absolute inset-y-0 rounded-none"
+            style={{
+              left: `${projectWidthPercent}%`,
+              right: 0,
+              backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 2px, oklch(0.7 0.15 50 / 0.3) 2px, oklch(0.7 0.15 50 / 0.3) 4px)`,
+            }}
+          />
+        )}
         {percent > 0 && percent < 100 && (
           <div
             className="absolute inset-y-0 w-px bg-[var(--today)]"
-            style={{ left: `${percent}%` }}
+            style={{ left: `${fillWidthPercent}%` }}
           />
         )}
       </div>
