@@ -430,6 +430,18 @@ function SortableRow({
             <MessageSquare className="h-2.5 w-2.5" /> {task.comments.length}
           </span>
         )}
+        {task.blocks.filter((b) => b.type === "partial").length > 0 && (
+          <span className="inline-flex items-center gap-0.5 text-[9px] text-[var(--status-partial)]">
+            <AlertTriangle className="h-2.5 w-2.5" />{" "}
+            {task.blocks.filter((b) => b.type === "partial").length}
+          </span>
+        )}
+        {task.blocks.filter((b) => b.type === "total").length > 0 && (
+          <span className="inline-flex items-center gap-0.5 text-[9px] text-[var(--status-blocked)]">
+            <AlertOctagon className="h-2.5 w-2.5" />{" "}
+            {task.blocks.filter((b) => b.type === "total").length}
+          </span>
+        )}
       </div>
       {showResponsable && (
         <div className="truncate text-[11px] text-muted-foreground">{task.assignee || "—"}</div>
