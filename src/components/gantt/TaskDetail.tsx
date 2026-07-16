@@ -216,6 +216,8 @@ export function TaskDetail({
               </div>
             </div>
 
+            <div className="border-b" />
+
             <div>
               <div className="mb-1 flex items-center justify-between">
                 <div className="text-[9px] font-medium uppercase text-muted-foreground">
@@ -277,6 +279,8 @@ export function TaskDetail({
                 </div>
               </div>
             </div>
+
+            <div className="border-b" />
 
             <div>
               <div className="mb-1 flex items-center justify-between">
