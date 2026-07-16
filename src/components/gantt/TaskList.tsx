@@ -12,7 +12,7 @@ import {
   GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef, useEffect, Fragment } from "react";
+import { useState, useRef, useEffect, Fragment, useCallback } from "react";
 import {
   DndContext,
   closestCenter,
@@ -29,6 +29,19 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+
+const COL_WIDTHS_KEY = "gantt-col-widths";
+
+function loadWidths() {
+  if (typeof window === "undefined") return { responsable: 90, progress: 44 };
+  try {
+    const raw = localStorage.getItem(COL_WIDTHS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    /* ignore */
+  }
+  return { responsable: 90, progress: 44 };
+}
 
 export function TaskList({
   order,
@@ -53,6 +66,49 @@ export function TaskList({
   projectStart?: string;
   projectEnd?: string;
 }) {
+  const [colWidths, setColWidths] = useState(loadWidths);
+
+  useEffect(() => {
+    localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(colWidths));
+  }, [colWidths]);
+
+  const [resizing, setResizing] = useState<"responsable" | "progress" | null>(null);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
+
+  const startResize = useCallback(
+    (col: "responsable" | "progress", e: React.MouseEvent) => {
+      e.preventDefault();
+      setResizing(col);
+      startXRef.current = e.clientX;
+      startWidthRef.current = colWidths[col];
+    },
+    [colWidths],
+  );
+
+  useEffect(() => {
+    if (!resizing) return;
+    const onMove = (e: MouseEvent) => {
+      const delta = e.clientX - startXRef.current;
+      const min = resizing === "responsable" ? 60 : 30;
+      setColWidths((prev: { responsable: number; progress: number }) => ({
+        ...prev,
+        [resizing]: Math.max(min, startWidthRef.current + delta),
+      }));
+    };
+    const onUp = () => setResizing(null);
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    return () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+  }, [resizing]);
+
+  const gridStyle = {
+    gridTemplateColumns: `1fr ${colWidths.responsable}px ${colWidths.progress}px`,
+  };
+
   const byParent = new Map<string | null, Task[]>();
   for (const t of order) {
     const arr = byParent.get(t.parentId) ?? [];
@@ -107,6 +163,7 @@ export function TaskList({
               isSelected={selectedId === task.id}
               onToggleCollapse={toggleCollapse}
               onSelect={onSelect}
+              gridStyle={gridStyle}
             />
             {!collapsed.has(task.id) && byParent.has(task.id) && walk(task.id)}
           </Fragment>
@@ -116,7 +173,7 @@ export function TaskList({
   };
 
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", resizing && "select-none")}>
       <div className="flex h-[40px] items-center justify-between overflow-hidden rounded-md border bg-card px-2">
         <div className="text-xs font-semibold">Tareas</div>
         <Button
@@ -130,10 +187,26 @@ export function TaskList({
       </div>
       <div className="rounded-lg border bg-card">
         <ProjectTimeBar projectStart={projectStart} projectEnd={projectEnd} />
-        <div className="grid h-[30px] grid-cols-[1fr_90px_44px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          <div>Tarea</div>
-          <div>Responsable</div>
-          <div className="text-right">%</div>
+        <div className="relative">
+          <div
+            className="grid h-[30px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+            style={gridStyle}
+          >
+            <div>Tarea</div>
+            <div>Responsable</div>
+            <div className="text-right">%</div>
+          </div>
+          {/* Resize handles */}
+          <div
+            className="absolute top-0 bottom-0 w-1.5 cursor-col-resize bg-transparent hover:bg-primary/30 active:bg-primary/50"
+            style={{ left: `calc(100% - ${colWidths.responsable + colWidths.progress + 8}px)` }}
+            onMouseDown={(e) => startResize("responsable", e)}
+          />
+          <div
+            className="absolute top-0 bottom-0 w-1.5 cursor-col-resize bg-transparent hover:bg-primary/30 active:bg-primary/50"
+            style={{ left: `calc(100% - ${colWidths.progress + 8}px)` }}
+            onMouseDown={(e) => startResize("progress", e)}
+          />
         </div>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           {walk(null)}
@@ -194,6 +267,7 @@ function SortableRow({
   isSelected,
   onToggleCollapse,
   onSelect,
+  gridStyle,
 }: {
   task: Task;
   depth: number;
@@ -202,6 +276,7 @@ function SortableRow({
   isSelected: boolean;
   onToggleCollapse: (id: string) => void;
   onSelect: (id: string) => void;
+  gridStyle: React.CSSProperties;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -216,10 +291,10 @@ function SortableRow({
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, ...gridStyle }}
       data-task-row
       className={cn(
-        "grid h-8 cursor-pointer grid-cols-[1fr_90px_44px] items-center gap-1 border-b px-2 text-xs hover:bg-accent/30",
+        "grid h-8 cursor-pointer items-center gap-1 border-b px-2 text-xs hover:bg-accent/30",
         isSelected && "bg-accent/50",
         isDragging && "z-10 bg-accent/20 shadow-md",
       )}
