@@ -60,7 +60,20 @@
       "estimatedStartDate": "2026-06-22",
       "estimatedEndDate": "2026-06-30",
       "progress": 95,
-      "comments": [],
+      "comments": [
+        {
+          "id": "3bq12b1w",
+          "author": "sdf",
+          "text": "dsfa",
+          "createdAt": "2026-07-16T12:21:55.911Z"
+        },
+        {
+          "id": "pzs5si1b",
+          "author": "sdf",
+          "text": "dfsfs",
+          "createdAt": "2026-07-16T12:22:04.515Z"
+        }
+      ],
       "createdAt": "2026-07-14",
       "actualStartDate": "2026-06-22",
       "actualEndDate": "2026-07-10",
@@ -164,9 +177,9 @@
       "blocks": [
         {
           "id": "vyasjo64",
-          "type": "partial",
-          "startDate": "2026-07-22",
-          "endDate": "2026-07-22"
+          "type": "total",
+          "startDate": "2026-07-07",
+          "endDate": "2026-07-07"
         }
       ],
       "comments": [],
@@ -179,9 +192,20 @@
       "title": "Core KPI Venta Bruta Amdocs",
       "assignee": "",
       "progress": 0,
-      "blocks": [],
+      "blocks": [
+        {
+          "id": "phwov8rw",
+          "type": "total",
+          "startDate": "2026-07-10",
+          "endDate": "2026-07-10"
+        }
+      ],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-07-10",
+      "initialEndDate": "2026-07-15",
+      "estimatedStartDate": "2026-08-03",
+      "estimatedEndDate": "2026-08-14"
     },
     {
       "id": "46ph2xqy",

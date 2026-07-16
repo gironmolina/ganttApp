@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { store, type Task, type BlockRange } from "@/lib/gantt-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { DatePicker } from "./DatePicker";
@@ -15,7 +14,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, MessageSquarePlus, Plus, CalendarIcon } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronDown,
+  Trash2,
+  MessageSquarePlus,
+  Plus,
+  CalendarIcon,
+} from "lucide-react";
 
 export function TaskDetail({
   task,
@@ -32,20 +38,60 @@ export function TaskDetail({
 }) {
   const [commentAuthor, setCommentAuthor] = useState("");
   const [commentText, setCommentText] = useState("");
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const parent = allTasks.find((t) => t.id === task.parentId);
 
+  const toggleSection = (id: string) => {
+    setCollapsedSections((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
+
+  const isCollapsed = (id: string) => collapsedSections.has(id);
+
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-5">
-      <div className="flex items-start justify-between gap-2">
-        {parent && <div className="text-xs text-muted-foreground">Subtarea de: {parent.title}</div>}
-        <Button variant="ghost" size="icon" className="ml-auto" onClick={onClose}>
-          ×
-        </Button>
+    <div className="flex h-full flex-col gap-2 overflow-y-auto p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            onClick={() => onAddSubtask(task.id)}
+          >
+            <Plus className="mr-1 h-3 w-3" /> Subtarea
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            className="h-7 px-2 text-xs"
+            onClick={() => {
+              if (confirm("¿Eliminar tarea y sus subtareas?")) {
+                store.remove(task.id);
+                onClose();
+              }
+            }}
+          >
+            <Trash2 className="mr-1 h-3 w-3" /> Eliminar
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          {parent && (
+            <div className="text-[10px] text-muted-foreground">Subtarea de: {parent.title}</div>
+          )}
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-sm" onClick={onClose}>
+            ×
+          </Button>
+        </div>
       </div>
 
       <div>
-        <Label>Nombre</Label>
+        <Label className="text-[10px]">Nombre</Label>
         <Input
+          className="h-7 text-xs"
           value={task.title}
           onChange={(e) => store.update(task.id, { title: e.target.value })}
           placeholder="Nombre de la tarea"
@@ -53,207 +99,228 @@ export function TaskDetail({
       </div>
 
       <div>
-        <Label>Responsable</Label>
+        <Label className="text-[10px]">Responsable</Label>
         <Input
+          className="h-7 text-xs"
           value={task.assignee}
           onChange={(e) => store.update(task.id, { assignee: e.target.value })}
           placeholder="Nombre del responsable"
         />
       </div>
 
-      <div className="rounded-md border bg-muted/40 p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Planificación inicial
-          </div>
-          {(task.initialStartDate || task.initialEndDate) && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() =>
-                store.update(task.id, { initialStartDate: undefined, initialEndDate: undefined })
-              }
-            >
-              Limpiar
-            </Button>
+      {/* Fechas section */}
+      <div className="rounded border bg-muted/40">
+        <button
+          className="flex w-full items-center gap-1 px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
+          onClick={() => toggleSection("fechas")}
+        >
+          {isCollapsed("fechas") ? (
+            <ChevronRight className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
           )}
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Fecha inicio inicial</Label>
-            <DatePicker
-              value={task.initialStartDate ?? ""}
-              min={parent?.initialStartDate ?? projectStartDate}
-              onChange={(v) => {
-                const patch: Partial<Task> = { initialStartDate: v || undefined };
-                if (!v && task.initialEndDate) {
-                  patch.initialEndDate = undefined;
-                }
-                if (v && task.initialEndDate && task.initialEndDate < v) {
-                  patch.initialEndDate = undefined;
-                }
-                store.update(task.id, patch);
-              }}
-            />
-          </div>
-          <div>
-            <Label>Fecha fin inicial</Label>
-            {task.initialStartDate ? (
-              <DatePicker
-                value={task.initialEndDate ?? ""}
-                min={task.initialStartDate}
-                focusMonth={task.initialStartDate}
-                onChange={(v) => store.update(task.id, { initialEndDate: v || undefined })}
-              />
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full justify-start font-normal text-muted-foreground"
-                disabled
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                Primero indica inicio
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="rounded-md border bg-muted/40 p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Fechas estimadas
-          </div>
-          {(task.estimatedStartDate || task.estimatedEndDate) && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() =>
-                store.update(task.id, {
-                  estimatedStartDate: undefined,
-                  estimatedEndDate: undefined,
-                })
-              }
-            >
-              Limpiar
-            </Button>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Fecha inicio estimada</Label>
-            <DatePicker
-              value={task.estimatedStartDate ?? ""}
-              min={parent?.estimatedStartDate ?? parent?.initialStartDate ?? projectStartDate}
-              onChange={(v) => {
-                const patch: Partial<Task> = { estimatedStartDate: v || undefined };
-                if (!v && task.estimatedEndDate) {
-                  patch.estimatedEndDate = undefined;
-                }
-                if (v && task.estimatedEndDate && task.estimatedEndDate < v) {
-                  patch.estimatedEndDate = undefined;
-                }
-                store.update(task.id, patch);
-              }}
-            />
-          </div>
-          <div>
-            <Label>Fecha fin estimada</Label>
-            {task.estimatedStartDate ? (
-              <DatePicker
-                value={task.estimatedEndDate ?? ""}
-                min={task.estimatedStartDate}
-                focusMonth={task.estimatedStartDate}
-                onChange={(v) => store.update(task.id, { estimatedEndDate: v || undefined })}
-              />
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full justify-start font-normal text-muted-foreground"
-                disabled
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                Primero indica inicio
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="rounded-md border p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Fechas reales
-          </div>
-          {(task.actualStartDate || task.actualEndDate) && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() =>
-                store.update(task.id, { actualStartDate: undefined, actualEndDate: undefined })
-              }
-            >
-              Limpiar
-            </Button>
-          )}
-        </div>
-        {!task.estimatedStartDate || !task.estimatedEndDate ? (
-          <p className="py-2 text-xs text-muted-foreground">Primero define las fechas estimadas.</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
+          Fechas
+        </button>
+        {!isCollapsed("fechas") && (
+          <div className="space-y-2 px-2 pb-2">
             <div>
-              <Label>Inicio real</Label>
-              <DatePicker
-                value={task.actualStartDate ?? ""}
-                min={task.estimatedStartDate}
-                focusMonth={task.estimatedStartDate ?? projectStartDate}
-                onChange={(v) => {
-                  const patch: Partial<Task> = { actualStartDate: v || undefined };
-                  if (!v && task.actualEndDate) {
-                    patch.actualEndDate = undefined;
-                  }
-                  if (v && task.actualEndDate && task.actualEndDate < v) {
-                    patch.actualEndDate = undefined;
-                  }
-                  store.update(task.id, patch);
-                }}
-              />
+              <div className="mb-1 flex items-center justify-between">
+                <div className="text-[9px] font-medium uppercase text-muted-foreground">
+                  Planificación inicial
+                </div>
+                {(task.initialStartDate || task.initialEndDate) && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-4 px-1 text-[9px]"
+                    onClick={() =>
+                      store.update(task.id, {
+                        initialStartDate: undefined,
+                        initialEndDate: undefined,
+                      })
+                    }
+                  >
+                    Limpiar
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[9px]">Inicio inicial</Label>
+                  <DatePicker
+                    value={task.initialStartDate ?? ""}
+                    min={parent?.initialStartDate ?? projectStartDate}
+                    onChange={(v) => {
+                      const patch: Partial<Task> = { initialStartDate: v || undefined };
+                      if (!v && task.initialEndDate) {
+                        patch.initialEndDate = undefined;
+                      }
+                      if (v && task.initialEndDate && task.initialEndDate < v) {
+                        patch.initialEndDate = undefined;
+                      }
+                      store.update(task.id, patch);
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[9px]">Fin inicial</Label>
+                  {task.initialStartDate ? (
+                    <DatePicker
+                      value={task.initialEndDate ?? ""}
+                      min={task.initialStartDate}
+                      focusMonth={task.initialStartDate}
+                      onChange={(v) => store.update(task.id, { initialEndDate: v || undefined })}
+                    />
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="h-7 w-full justify-start font-normal text-[10px] text-muted-foreground"
+                      disabled
+                    >
+                      <CalendarIcon className="mr-1 h-3 w-3" />
+                      Primero inicio
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
+
             <div>
-              <Label>Fin real</Label>
-              {task.actualStartDate ? (
-                <DatePicker
-                  value={task.actualEndDate ?? ""}
-                  min={task.actualStartDate}
-                  focusMonth={task.actualStartDate}
-                  onChange={(v) => store.update(task.id, { actualEndDate: v || undefined })}
-                />
+              <div className="mb-1 flex items-center justify-between">
+                <div className="text-[9px] font-medium uppercase text-muted-foreground">
+                  Estimadas
+                </div>
+                {(task.estimatedStartDate || task.estimatedEndDate) && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-4 px-1 text-[9px]"
+                    onClick={() =>
+                      store.update(task.id, {
+                        estimatedStartDate: undefined,
+                        estimatedEndDate: undefined,
+                      })
+                    }
+                  >
+                    Limpiar
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[9px]">Inicio estimada</Label>
+                  <DatePicker
+                    value={task.estimatedStartDate ?? ""}
+                    min={parent?.estimatedStartDate ?? parent?.initialStartDate ?? projectStartDate}
+                    onChange={(v) => {
+                      const patch: Partial<Task> = { estimatedStartDate: v || undefined };
+                      if (!v && task.estimatedEndDate) {
+                        patch.estimatedEndDate = undefined;
+                      }
+                      if (v && task.estimatedEndDate && task.estimatedEndDate < v) {
+                        patch.estimatedEndDate = undefined;
+                      }
+                      store.update(task.id, patch);
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[9px]">Fin estimada</Label>
+                  {task.estimatedStartDate ? (
+                    <DatePicker
+                      value={task.estimatedEndDate ?? ""}
+                      min={task.estimatedStartDate}
+                      focusMonth={task.estimatedStartDate}
+                      onChange={(v) => store.update(task.id, { estimatedEndDate: v || undefined })}
+                    />
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="h-7 w-full justify-start font-normal text-[10px] text-muted-foreground"
+                      disabled
+                    >
+                      <CalendarIcon className="mr-1 h-3 w-3" />
+                      Primero inicio
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1 flex items-center justify-between">
+                <div className="text-[9px] font-medium uppercase text-muted-foreground">Reales</div>
+                {(task.actualStartDate || task.actualEndDate) && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-4 px-1 text-[9px]"
+                    onClick={() =>
+                      store.update(task.id, {
+                        actualStartDate: undefined,
+                        actualEndDate: undefined,
+                      })
+                    }
+                  >
+                    Limpiar
+                  </Button>
+                )}
+              </div>
+              {!task.estimatedStartDate || !task.estimatedEndDate ? (
+                <p className="py-1 text-[10px] text-muted-foreground">
+                  Primero define las fechas estimadas.
+                </p>
               ) : (
-                <Button
-                  variant="outline"
-                  className="w-full justify-start font-normal text-muted-foreground"
-                  disabled
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  Primero indica inicio
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[9px]">Inicio real</Label>
+                    <DatePicker
+                      value={task.actualStartDate ?? ""}
+                      min={task.estimatedStartDate}
+                      focusMonth={task.estimatedStartDate ?? projectStartDate}
+                      onChange={(v) => {
+                        const patch: Partial<Task> = { actualStartDate: v || undefined };
+                        if (!v && task.actualEndDate) {
+                          patch.actualEndDate = undefined;
+                        }
+                        if (v && task.actualEndDate && task.actualEndDate < v) {
+                          patch.actualEndDate = undefined;
+                        }
+                        store.update(task.id, patch);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[9px]">Fin real</Label>
+                    {task.actualStartDate ? (
+                      <DatePicker
+                        value={task.actualEndDate ?? ""}
+                        min={task.actualStartDate}
+                        focusMonth={task.actualStartDate}
+                        onChange={(v) => store.update(task.id, { actualEndDate: v || undefined })}
+                      />
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="h-7 w-full justify-start font-normal text-[10px] text-muted-foreground"
+                        disabled
+                      >
+                        <CalendarIcon className="mr-1 h-3 w-3" />
+                        Primero inicio
+                      </Button>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </div>
         )}
-        <p className="mt-2 text-[10px] text-muted-foreground">
-          Se registran cuando la tarea comienza o termina realmente.
-        </p>
       </div>
 
       <div>
-        <div className="mb-2 flex items-center justify-between">
-          <Label>Progreso</Label>
-          <span className="text-sm font-medium">{task.progress}%</span>
+        <div className="mb-1 flex items-center justify-between">
+          <Label className="text-[10px]">Progreso</Label>
+          <span className="text-xs font-medium">{task.progress}%</span>
         </div>
         <Slider
           value={[task.progress]}
@@ -261,10 +328,11 @@ export function TaskDetail({
           step={5}
           onValueChange={([v]) => store.update(task.id, { progress: v })}
         />
-        <div className="mt-2 flex gap-2">
+        <div className="mt-1 flex gap-1.5">
           <Button
             size="sm"
             variant="outline"
+            className="h-6 px-2 text-[10px]"
             onClick={() => store.update(task.id, { progress: 0 })}
           >
             Reiniciar
@@ -272,202 +340,294 @@ export function TaskDetail({
           <Button
             size="sm"
             variant="outline"
+            className="h-6 px-2 text-[10px]"
             onClick={() => store.update(task.id, { progress: 100 })}
           >
-            Marcar completada
+            Completada
           </Button>
         </div>
       </div>
 
-      <div className="rounded-md border p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Bloqueos
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              const uid = Math.random().toString(36).slice(2, 10);
-              const defaultStart = task.estimatedStartDate ?? task.initialStartDate ?? "";
-              store.update(task.id, {
-                blocks: [
-                  ...task.blocks,
-                  { id: uid, type: "partial", startDate: defaultStart, endDate: defaultStart },
-                ],
-              });
-            }}
-          >
-            <Plus className="mr-1 h-3 w-3" /> Añadir
-          </Button>
-        </div>
-        {task.blocks.length === 0 && (
-          <p className="text-xs text-muted-foreground">Sin bloqueos registrados.</p>
-        )}
-        <div className="space-y-3">
-          {task.blocks.map((block) => (
-            <div key={block.id} className="space-y-2 rounded border bg-muted/30 p-2">
-              <div className="flex items-center gap-2">
-                <Select
-                  value={block.type}
-                  onValueChange={(v) => {
-                    store.update(task.id, {
-                      blocks: task.blocks.map((b) =>
-                        b.id === block.id ? { ...b, type: v as "partial" | "total" } : b,
-                      ),
-                    });
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="partial">Parcial</SelectItem>
-                    <SelectItem value="total">Total</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="ml-auto h-8 w-8 p-0"
-                  onClick={() =>
-                    store.update(task.id, {
-                      blocks: task.blocks.filter((b) => b.id !== block.id),
-                    })
-                  }
-                >
-                  ×
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-[10px]">Inicio bloqueo</Label>
-                  <DatePicker
-                    value={block.startDate}
-                    min={
-                      block.type === "partial"
-                        ? (task.estimatedStartDate ?? task.initialStartDate ?? projectStartDate)
-                        : projectStartDate
-                    }
-                    onChange={(v) => {
+      {/* Bloqueos section */}
+      <div className="rounded border">
+        <button
+          className="flex w-full items-center gap-1 px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
+          onClick={() => toggleSection("bloqueos")}
+        >
+          {isCollapsed("bloqueos") ? (
+            <ChevronRight className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )}
+          Bloqueos
+          <Badge variant="secondary" className="ml-1 h-3.5 px-1 text-[8px]">
+            {task.blocks.length}
+          </Badge>
+          {!isCollapsed("bloqueos") && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-auto h-5 px-1.5 text-[9px]"
+              onClick={(e) => {
+                e.stopPropagation();
+                const uid = Math.random().toString(36).slice(2, 10);
+                const defaultStart = task.estimatedStartDate ?? task.initialStartDate ?? "";
+                store.update(task.id, {
+                  blocks: [
+                    ...task.blocks,
+                    { id: uid, type: "partial", startDate: defaultStart, endDate: defaultStart },
+                  ],
+                });
+              }}
+            >
+              <Plus className="mr-0.5 h-2.5 w-2.5" /> Añadir
+            </Button>
+          )}
+        </button>
+        {!isCollapsed("bloqueos") && (
+          <div className="px-2 pb-2">
+            {task.blocks.length === 0 && (
+              <p className="text-[10px] text-muted-foreground">Sin bloqueos registrados.</p>
+            )}
+            <div className="space-y-1.5">
+              {task.blocks.map((block) => (
+                <div key={block.id} className="space-y-1 rounded border bg-muted/30 p-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Select
+                      value={block.type}
+                      onValueChange={(v) => {
+                        store.update(task.id, {
+                          blocks: task.blocks.map((b) =>
+                            b.id === block.id ? { ...b, type: v as "partial" | "total" } : b,
+                          ),
+                        });
+                      }}
+                    >
+                      <SelectTrigger className="h-6 w-24 text-[10px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="partial">Parcial</SelectItem>
+                        <SelectItem value="total">Total</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="ml-auto h-6 w-6 p-0 text-xs"
+                      onClick={() =>
+                        store.update(task.id, {
+                          blocks: task.blocks.filter((b) => b.id !== block.id),
+                        })
+                      }
+                    >
+                      ×
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div>
+                      <Label className="text-[9px]">Inicio bloqueo</Label>
+                      <DatePicker
+                        value={block.startDate}
+                        min={
+                          block.type === "partial"
+                            ? (task.estimatedStartDate ?? task.initialStartDate ?? projectStartDate)
+                            : projectStartDate
+                        }
+                        onChange={(v) => {
+                          store.update(task.id, {
+                            blocks: task.blocks.map((b) =>
+                              b.id === block.id
+                                ? {
+                                    ...b,
+                                    startDate: v,
+                                    endDate: v && b.endDate && b.endDate < v ? v : b.endDate,
+                                  }
+                                : b,
+                            ),
+                          });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[9px]">Fin bloqueo</Label>
+                      {block.startDate ? (
+                        <DatePicker
+                          value={block.endDate}
+                          min={block.startDate}
+                          focusMonth={block.startDate}
+                          onChange={(v) => {
+                            store.update(task.id, {
+                              blocks: task.blocks.map((b) =>
+                                b.id === block.id ? { ...b, endDate: v } : b,
+                              ),
+                            });
+                          }}
+                        />
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="h-7 w-full justify-start font-normal text-[10px] text-muted-foreground"
+                          disabled
+                        >
+                          <CalendarIcon className="mr-1 h-3 w-3" />
+                          Primero inicio
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <Input
+                    className="h-6 text-[10px]"
+                    placeholder="Motivo del bloqueo (opcional)"
+                    value={block.reason ?? ""}
+                    onChange={(e) => {
                       store.update(task.id, {
                         blocks: task.blocks.map((b) =>
-                          b.id === block.id
-                            ? {
-                                ...b,
-                                startDate: v,
-                                endDate: v && b.endDate && b.endDate < v ? v : b.endDate,
-                              }
-                            : b,
+                          b.id === block.id ? { ...b, reason: e.target.value || undefined } : b,
                         ),
                       });
                     }}
                   />
                 </div>
-                <div>
-                  <Label className="text-[10px]">Fin bloqueo</Label>
-                  {block.startDate ? (
-                    <DatePicker
-                      value={block.endDate}
-                      min={block.startDate}
-                      focusMonth={block.startDate}
-                      onChange={(v) => {
-                        store.update(task.id, {
-                          blocks: task.blocks.map((b) =>
-                            b.id === block.id ? { ...b, endDate: v } : b,
-                          ),
-                        });
-                      }}
-                    />
-                  ) : (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start font-normal text-muted-foreground"
-                      disabled
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Primero indica inicio
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <Input
-                placeholder="Motivo del bloqueo (opcional)"
-                value={block.reason ?? ""}
-                onChange={(e) => {
-                  store.update(task.id, {
-                    blocks: task.blocks.map((b) =>
-                      b.id === block.id ? { ...b, reason: e.target.value || undefined } : b,
-                    ),
-                  });
-                }}
-              />
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
-      <div className="rounded-md border p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-sm font-semibold">Comentarios</div>
-          <Badge variant="secondary">{task.comments.length}</Badge>
-        </div>
-        <div className="space-y-2">
-          {task.comments.length === 0 && (
-            <p className="text-xs text-muted-foreground">Aún no hay comentarios.</p>
+      {/* Comentarios section */}
+      <div className="rounded border">
+        <button
+          className="flex w-full items-center gap-1 px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
+          onClick={() => toggleSection("comentarios")}
+        >
+          {isCollapsed("comentarios") ? (
+            <ChevronRight className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
           )}
-          {task.comments.map((c) => (
-            <div key={c.id} className="rounded bg-muted/50 p-2 text-sm">
-              <div className="flex items-baseline justify-between">
-                <span className="font-medium">{c.author || "Anónimo"}</span>
-                <span className="text-[10px] text-muted-foreground">
-                  {new Date(c.createdAt).toLocaleString("es")}
-                </span>
-              </div>
-              <p className="mt-1 whitespace-pre-wrap text-sm">{c.text}</p>
+          Comentarios
+          <Badge variant="secondary" className="ml-1 h-3.5 px-1 text-[8px]">
+            {task.comments.length}
+          </Badge>
+        </button>
+        {!isCollapsed("comentarios") && (
+          <div className="px-2 pb-2">
+            <div className="space-y-1">
+              {task.comments.length === 0 && (
+                <p className="text-[10px] text-muted-foreground">Aún no hay comentarios.</p>
+              )}
+              {task.comments.map((c) => (
+                <CommentItem key={c.id} comment={c} taskId={task.id} />
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="mt-3 space-y-2">
-          <Input
-            placeholder="Tu nombre"
-            value={commentAuthor}
-            onChange={(e) => setCommentAuthor(e.target.value)}
-          />
-          <Textarea
-            placeholder="Escribe un comentario…"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-          />
+            <div className="mt-2 space-y-1">
+              <Input
+                className="h-6 text-[10px]"
+                placeholder="Tu nombre"
+                value={commentAuthor}
+                onChange={(e) => setCommentAuthor(e.target.value)}
+              />
+              <Textarea
+                className="min-h-[48px] text-[10px]"
+                placeholder="Escribe un comentario…"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+              />
+              <Button
+                size="sm"
+                className="h-6 px-2 text-[10px]"
+                onClick={() => {
+                  if (!commentText.trim()) return;
+                  store.addComment(task.id, commentAuthor.trim() || "Anónimo", commentText.trim());
+                  setCommentText("");
+                }}
+              >
+                <MessageSquarePlus className="mr-1 h-3 w-3" /> Añadir
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CommentItem({
+  comment,
+  taskId,
+}: {
+  comment: { id: string; author: string; text: string; createdAt: string };
+  taskId: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(comment.text);
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (editing) ref.current?.focus();
+  }, [editing]);
+
+  useEffect(() => {
+    setDraft(comment.text);
+  }, [comment.text]);
+
+  return (
+    <div className="group rounded bg-muted/50 p-1.5 text-xs">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[10px] font-medium">{comment.author || "Anónimo"}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-[9px] text-muted-foreground">
+            {new Date(comment.createdAt).toLocaleString("es")}
+          </span>
           <Button
+            variant="ghost"
             size="sm"
-            onClick={() => {
-              if (!commentText.trim()) return;
-              store.addComment(task.id, commentAuthor.trim() || "Anónimo", commentText.trim());
-              setCommentText("");
-            }}
+            className="h-4 w-4 p-0 text-[9px] opacity-0 group-hover:opacity-100"
+            onClick={() => setEditing(true)}
           >
-            <MessageSquarePlus className="mr-1 h-4 w-4" /> Añadir comentario
+            ✎
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-4 w-4 p-0 text-[9px] opacity-0 group-hover:opacity-100 text-destructive"
+            onClick={() => store.deleteComment(taskId, comment.id)}
+          >
+            ×
           </Button>
         </div>
       </div>
-
-      <div className="mt-auto flex gap-2 border-t pt-3">
-        <Button variant="outline" onClick={() => onAddSubtask(task.id)}>
-          <Plus className="mr-1 h-4 w-4" /> Subtarea
-        </Button>
-        <Button
-          variant="destructive"
-          onClick={() => {
-            if (confirm("¿Eliminar tarea y sus subtareas?")) {
-              store.remove(task.id);
-              onClose();
+      {editing ? (
+        <Textarea
+          ref={ref}
+          className="mt-0.5 min-h-[32px] text-[10px]"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => {
+            const trimmed = draft.trim();
+            if (trimmed && trimmed !== comment.text) {
+              store.updateComment(taskId, comment.id, trimmed);
+            } else {
+              setDraft(comment.text);
+            }
+            setEditing(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setDraft(comment.text);
+              setEditing(false);
             }
           }}
+        />
+      ) : (
+        <p
+          className="mt-0.5 cursor-text whitespace-pre-wrap text-[10px]"
+          onDoubleClick={() => setEditing(true)}
         >
-          <Trash2 className="mr-1 h-4 w-4" /> Eliminar
-        </Button>
-      </div>
+          {comment.text}
+        </p>
+      )}
     </div>
   );
 }

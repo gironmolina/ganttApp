@@ -415,6 +415,20 @@ export const store = {
     );
     persist();
   },
+  deleteComment(taskId: string, commentId: string) {
+    tasks = tasks.map((t) =>
+      t.id === taskId ? { ...t, comments: t.comments.filter((c) => c.id !== commentId) } : t,
+    );
+    persist();
+  },
+  updateComment(taskId: string, commentId: string, text: string) {
+    tasks = tasks.map((t) =>
+      t.id === taskId
+        ? { ...t, comments: t.comments.map((c) => (c.id === commentId ? { ...c, text } : c)) }
+        : t,
+    );
+    persist();
+  },
   reorder(taskId: string, toIndex: number) {
     const task = tasks.find((x) => x.id === taskId);
     if (!task) return;
