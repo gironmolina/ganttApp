@@ -111,8 +111,8 @@ export function TaskList({
   };
 
   return (
-    <div className="space-y-1">
-      <div className="flex h-[34px] items-center justify-between overflow-hidden rounded-md border bg-card px-2">
+    <div className="space-y-2">
+      <div className="flex h-[40px] items-center justify-between overflow-hidden rounded-md border bg-card px-2">
         <div className="text-xs font-semibold">Tareas</div>
         <Button
           size="sm"
@@ -124,7 +124,7 @@ export function TaskList({
         </Button>
       </div>
       <div className="rounded-lg border bg-card">
-        <div className="grid h-[40px] grid-cols-[1fr_90px_44px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="grid h-[74px] grid-cols-[1fr_90px_44px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           <div>Tarea</div>
           <div>Responsable</div>
           <div className="text-right">%</div>

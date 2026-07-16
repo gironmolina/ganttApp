@@ -88,20 +88,50 @@
       "initialStartDate": "2026-07-01",
       "initialEndDate": "2026-07-07",
       "estimatedStartDate": "2026-07-08",
-      "estimatedEndDate": "2026-07-16",
-      "progress": 0,
+      "estimatedEndDate": "2026-07-31",
+      "progress": 20,
       "blocks": [
         {
           "id": "l25m1ulm",
           "type": "total",
+          "startDate": "2026-07-01",
+          "endDate": "2026-07-01"
+        },
+        {
+          "id": "evte25p6",
+          "type": "partial",
           "startDate": "2026-07-08",
-          "endDate": "2026-07-08"
+          "endDate": "2026-07-22"
         }
       ],
       "comments": [],
       "createdAt": "2026-07-15",
       "actualStartDate": "2026-07-08",
-      "actualEndDate": "2026-07-23"
+      "actualEndDate": "2026-07-31"
+    },
+    {
+      "id": "0qbh208s",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Traductores",
+      "assignee": "",
+      "initialStartDate": "2026-07-01",
+      "initialEndDate": "2026-07-06",
+      "estimatedStartDate": "2026-07-09",
+      "estimatedEndDate": "2026-07-27",
+      "progress": 10,
+      "blocks": [
+        {
+          "id": "kh2il6fj",
+          "type": "total",
+          "startDate": "2026-07-01",
+          "endDate": "2026-07-01"
+        }
+      ],
+      "comments": [],
+      "createdAt": "2026-07-15",
+      "actualStartDate": "2026-07-09",
+      "actualEndDate": "2026-07-27"
     }
   ],
   "settings": {
