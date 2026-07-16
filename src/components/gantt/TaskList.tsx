@@ -10,8 +10,17 @@ import {
   Plus,
   MessageSquare,
   GripVertical,
+  Columns3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import { useState, useRef, useEffect, Fragment, useCallback } from "react";
 import {
   DndContext,
@@ -31,6 +40,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 const COL_WIDTHS_KEY = "gantt-col-widths";
+const COL_VISIBLE_KEY = "gantt-col-visible";
 
 function loadWidths() {
   if (typeof window === "undefined") return { responsable: 90, progress: 44 };
@@ -41,6 +51,17 @@ function loadWidths() {
     /* ignore */
   }
   return { responsable: 90, progress: 44 };
+}
+
+function loadVisible() {
+  if (typeof window === "undefined") return { responsable: true, progress: true };
+  try {
+    const raw = localStorage.getItem(COL_VISIBLE_KEY);
+    if (raw) return { responsable: true, progress: true, ...JSON.parse(raw) };
+  } catch {
+    /* ignore */
+  }
+  return { responsable: true, progress: true };
 }
 
 export function TaskList({
@@ -67,10 +88,15 @@ export function TaskList({
   projectEnd?: string;
 }) {
   const [colWidths, setColWidths] = useState(loadWidths);
+  const [colVisible, setColVisible] = useState(loadVisible);
 
   useEffect(() => {
     localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(colWidths));
   }, [colWidths]);
+
+  useEffect(() => {
+    localStorage.setItem(COL_VISIBLE_KEY, JSON.stringify(colVisible));
+  }, [colVisible]);
 
   const [resizing, setResizing] = useState<"responsable" | "progress" | null>(null);
   const startXRef = useRef(0);
@@ -91,9 +117,11 @@ export function TaskList({
     const onMove = (e: MouseEvent) => {
       const delta = e.clientX - startXRef.current;
       const min = resizing === "responsable" ? 60 : 30;
+      // Los grips estan en el borde izquierdo de cada columna: arrastrar hacia la
+      // izquierda (delta negativo) ensancha la columna.
       setColWidths((prev: { responsable: number; progress: number }) => ({
         ...prev,
-        [resizing]: Math.max(min, startWidthRef.current + delta),
+        [resizing]: Math.max(min, startWidthRef.current - delta),
       }));
     };
     const onUp = () => setResizing(null);
@@ -106,7 +134,13 @@ export function TaskList({
   }, [resizing]);
 
   const gridStyle = {
-    gridTemplateColumns: `1fr ${colWidths.responsable}px ${colWidths.progress}px`,
+    gridTemplateColumns: [
+      "1fr",
+      colVisible.responsable ? `${colWidths.responsable}px` : null,
+      colVisible.progress ? `${colWidths.progress}px` : null,
+    ]
+      .filter(Boolean)
+      .join(" "),
   };
 
   const byParent = new Map<string | null, Task[]>();
@@ -164,6 +198,8 @@ export function TaskList({
               onToggleCollapse={toggleCollapse}
               onSelect={onSelect}
               gridStyle={gridStyle}
+              showResponsable={colVisible.responsable}
+              showProgress={colVisible.progress}
             />
             {!collapsed.has(task.id) && byParent.has(task.id) && walk(task.id)}
           </Fragment>
@@ -176,37 +212,88 @@ export function TaskList({
     <div className={cn("space-y-2", resizing && "select-none")}>
       <div className="flex h-[40px] items-center justify-between overflow-hidden rounded-md border bg-card px-2">
         <div className="text-xs font-semibold">Tareas</div>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 px-1.5 text-[11px]"
-          onClick={() => onAddSubtask(null)}
-        >
-          <Plus className="mr-1 h-3 w-3" /> Nueva
-        </Button>
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-1.5 text-[11px]"
+                title="Mostrar u ocultar columnas"
+              >
+                <Columns3 className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Columnas</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={colVisible.responsable}
+                onCheckedChange={(v) =>
+                  setColVisible((prev: { responsable: boolean; progress: boolean }) => ({
+                    ...prev,
+                    responsable: v,
+                  }))
+                }
+                onSelect={(e) => e.preventDefault()}
+              >
+                Responsable
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={colVisible.progress}
+                onCheckedChange={(v) =>
+                  setColVisible((prev: { responsable: boolean; progress: boolean }) => ({
+                    ...prev,
+                    progress: v,
+                  }))
+                }
+                onSelect={(e) => e.preventDefault()}
+              >
+                Porcentaje
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-1.5 text-[11px]"
+            onClick={() => onAddSubtask(null)}
+          >
+            <Plus className="mr-1 h-3 w-3" /> Nueva
+          </Button>
+        </div>
       </div>
       <div className="rounded-lg border bg-card">
         <ProjectTimeBar projectStart={projectStart} projectEnd={projectEnd} />
-        <div className="relative">
-          <div
-            className="grid h-[30px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
-            style={gridStyle}
-          >
-            <div>Tarea</div>
-            <div>Responsable</div>
-            <div className="text-right">%</div>
-          </div>
-          {/* Resize handles */}
-          <div
-            className="absolute top-0 bottom-0 w-1.5 cursor-col-resize bg-transparent hover:bg-primary/30 active:bg-primary/50"
-            style={{ left: `calc(100% - ${colWidths.responsable + colWidths.progress + 8}px)` }}
-            onMouseDown={(e) => startResize("responsable", e)}
-          />
-          <div
-            className="absolute top-0 bottom-0 w-1.5 cursor-col-resize bg-transparent hover:bg-primary/30 active:bg-primary/50"
-            style={{ left: `calc(100% - ${colWidths.progress + 8}px)` }}
-            onMouseDown={(e) => startResize("progress", e)}
-          />
+        <div
+          className="grid h-[30px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+          style={gridStyle}
+        >
+          <div>Tarea</div>
+          {colVisible.responsable && (
+            <div className="relative pl-2">
+              <span className="block truncate">Responsable</span>
+              <div
+                className="group absolute -top-px bottom-[-1px] left-0 z-10 flex w-2 -translate-x-1/2 cursor-col-resize items-stretch justify-center"
+                onMouseDown={(e) => startResize("responsable", e)}
+                title="Ajustar ancho de Responsable"
+              >
+                <div className="w-px bg-border transition-colors group-hover:w-0.5 group-hover:bg-primary" />
+              </div>
+            </div>
+          )}
+          {colVisible.progress && (
+            <div className="relative pl-2 text-right">
+              %
+              <div
+                className="group absolute -top-px bottom-[-1px] left-0 z-10 flex w-2 -translate-x-1/2 cursor-col-resize items-stretch justify-center"
+                onMouseDown={(e) => startResize("progress", e)}
+                title="Ajustar ancho de Porcentaje"
+              >
+                <div className="w-px bg-border transition-colors group-hover:w-0.5 group-hover:bg-primary" />
+              </div>
+            </div>
+          )}
         </div>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           {walk(null)}
@@ -268,6 +355,8 @@ function SortableRow({
   onToggleCollapse,
   onSelect,
   gridStyle,
+  showResponsable,
+  showProgress,
 }: {
   task: Task;
   depth: number;
@@ -277,6 +366,8 @@ function SortableRow({
   onToggleCollapse: (id: string) => void;
   onSelect: (id: string) => void;
   gridStyle: React.CSSProperties;
+  showResponsable: boolean;
+  showProgress: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -334,8 +425,10 @@ function SortableRow({
           </span>
         )}
       </div>
-      <div className="truncate text-[11px] text-muted-foreground">{task.assignee || "—"}</div>
-      <div className="text-right text-[11px] font-medium">{task.progress}%</div>
+      {showResponsable && (
+        <div className="truncate text-[11px] text-muted-foreground">{task.assignee || "—"}</div>
+      )}
+      {showProgress && <div className="text-right text-[11px] font-medium">{task.progress}%</div>}
     </div>
   );
 }

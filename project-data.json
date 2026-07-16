@@ -76,7 +76,8 @@
           "id": "9759b30x",
           "type": "partial",
           "startDate": "2026-06-22",
-          "endDate": "2026-07-02"
+          "endDate": "2026-07-02",
+          "reason": "sdfas"
         },
         {
           "id": "i8yd8z7e",
@@ -261,6 +262,116 @@
       "parentId": "if8824yl",
       "position": null,
       "title": "Validación Venta Neta Amdocs",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "oex92rdz",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Validación Venta Neta Lowi",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "myy6yxpy",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Validación Venta Neta Amdocs + Lowi",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "atcs9fz4",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Core KPI Activaciones",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "lx2gbaig",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Validación Activaciones (Amdocs)",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "dmry54v8",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Validación Activaciones (Lowi)",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "ixj9kcb8",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Validación Activaciones (Amdocs + Lowi)",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "x7eh75xc",
+      "parentId": "if8824yl",
+      "position": null,
+      "title": "Orquestación",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "sfltwu52",
+      "parentId": null,
+      "position": 2,
+      "title": "Modelo Cartera (Fase 2)",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "6yftfnce",
+      "parentId": null,
+      "position": 3,
+      "title": "Modelo Provisión (Fase 1) entrega 2",
+      "assignee": "",
+      "progress": 0,
+      "blocks": [],
+      "comments": [],
+      "createdAt": "2026-07-16"
+    },
+    {
+      "id": "i2be2gy2",
+      "parentId": null,
+      "position": 4,
+      "title": "Modelo Baja (Fase 3)",
       "assignee": "",
       "progress": 0,
       "blocks": [],
