@@ -354,6 +354,16 @@ export const store = {
       next.actualEndDate = next.actualStartDate;
     }
 
+    if (
+      next.initialStartDate &&
+      next.initialEndDate &&
+      !next.estimatedStartDate &&
+      !next.estimatedEndDate
+    ) {
+      next.estimatedStartDate = next.initialStartDate;
+      next.estimatedEndDate = next.initialEndDate;
+    }
+
     if (next.parentId) {
       const parent = tasks.find((x) => x.id === next.parentId);
       if (

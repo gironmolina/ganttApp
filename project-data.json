@@ -216,7 +216,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-07-16",
+      "initialEndDate": "2026-08-06",
+      "estimatedStartDate": "2026-07-16",
+      "estimatedEndDate": "2026-08-06"
     },
     {
       "id": "5o1fspjc",
