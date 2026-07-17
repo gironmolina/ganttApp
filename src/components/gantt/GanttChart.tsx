@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import type { Task } from "@/lib/gantt-store";
 import { todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
+import { setHoveredTask } from "@/lib/hover-sync";
 import {
   COL_WIDTH,
   ROW_HEIGHT,
@@ -20,6 +21,8 @@ export function GanttChart({
   selectedId,
   projectStart,
   projectEnd,
+  scrollRef,
+  onScrollSync,
 }: {
   tasks: Task[];
   order: Task[];
@@ -27,6 +30,8 @@ export function GanttChart({
   selectedId: string | null;
   projectStart?: string;
   projectEnd?: string;
+  scrollRef?: React.Ref<HTMLDivElement>;
+  onScrollSync?: () => void;
 }) {
   const { workdays, dateToIndex, weekStarts, projectEndIdx } = useMemo(
     () => buildTimeline(tasks, projectStart, projectEnd),
@@ -41,8 +46,37 @@ export function GanttChart({
   const todayIdx = dateToIndex.has(todayIso) ? dateToIndex.get(todayIso)! : null;
   const todayOffset = todayIdx !== null ? todayIdx * COL_WIDTH + COL_WIDTH / 2 : -1;
 
+  // Crosshair de columna: mutación DOM directa sobre dos overlays para no
+  // re-renderizar el árbol en cada mousemove.
+  const rowsRef = useRef<HTMLDivElement>(null);
+  const colOverlayRef = useRef<HTMLDivElement>(null);
+  const headerOverlayRef = useRef<HTMLDivElement>(null);
+  const hoveredColRef = useRef(-1);
+
+  const setHoveredCol = (col: number) => {
+    if (col === hoveredColRef.current) return;
+    hoveredColRef.current = col;
+    const show = col >= 0 && col < workdays.length;
+    for (const el of [colOverlayRef.current, headerOverlayRef.current]) {
+      if (!el) continue;
+      el.style.display = show ? "block" : "none";
+      if (show) el.style.left = `${col * COL_WIDTH}px`;
+    }
+  };
+
+  const onRowsMouseMove = (e: React.MouseEvent) => {
+    // getBoundingClientRect().left ya incorpora el scroll horizontal
+    const rect = rowsRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setHoveredCol(Math.floor((e.clientX - rect.left) / COL_WIDTH));
+  };
+
   return (
-    <div className="overflow-auto rounded-lg border bg-card">
+    <div
+      ref={scrollRef}
+      onScroll={onScrollSync}
+      className="gantt-scroll min-h-0 overflow-auto rounded-lg border bg-card"
+    >
       <div style={{ width: totalWidth, minWidth: "100%" }}>
         {/* Sprint header */}
         <div
@@ -89,10 +123,21 @@ export function GanttChart({
               </div>
             );
           })}
+          {/* Resaltado de la columna bajo el cursor */}
+          <div
+            ref={headerOverlayRef}
+            className="pointer-events-none absolute inset-y-0 bg-accent/30"
+            style={{ display: "none", width: COL_WIDTH }}
+          />
         </div>
 
         {/* Rows */}
-        <div className="relative">
+        <div
+          ref={rowsRef}
+          className="relative"
+          onMouseMove={onRowsMouseMove}
+          onMouseLeave={() => setHoveredCol(-1)}
+        >
           {/* today line */}
           {todayOffset >= 0 && (
             <div
@@ -228,12 +273,15 @@ export function GanttChart({
             return (
               <div
                 key={task.id}
+                data-row-id={task.id}
                 className={cn(
-                  "relative border-b hover:bg-accent/30",
+                  "relative border-b",
                   rowIdx % 2 === 1 && "bg-muted/20",
                   selectedId === task.id && "bg-accent/50",
                 )}
                 style={{ height: ROW_HEIGHT }}
+                onMouseEnter={() => setHoveredTask(task.id)}
+                onMouseLeave={() => setHoveredTask(null)}
               >
                 {/* day grid */}
                 <div className="pointer-events-none absolute inset-0 flex">
@@ -417,6 +465,13 @@ export function GanttChart({
               </div>
             );
           })}
+          {/* Resaltado de columna (crosshair): hermano posterior con z-0, pinta
+              sobre los fondos de fila pero bajo las barras (zIndex 1-9) */}
+          <div
+            ref={colOverlayRef}
+            className="pointer-events-none absolute inset-y-0 z-0 bg-accent/20"
+            style={{ display: "none", width: COL_WIDTH }}
+          />
         </div>
       </div>
     </div>

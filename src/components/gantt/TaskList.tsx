@@ -1,5 +1,6 @@
 import { type Task, store as ganttStore, todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
+import { setHoveredTask } from "@/lib/hover-sync";
 import { computeTimeProgress, parseDate, fmtShort, countWorkdays, toLocalIso } from "@/lib/gantt-utils";
 import {
   CheckCircle2,
@@ -76,6 +77,8 @@ export function TaskList({
   selectedId,
   projectStart,
   projectEnd,
+  scrollRef,
+  onScrollSync,
 }: {
   order: Task[];
   tasks: Task[];
@@ -88,6 +91,8 @@ export function TaskList({
   selectedId: string | null;
   projectStart?: string;
   projectEnd?: string;
+  scrollRef?: React.Ref<HTMLDivElement>;
+  onScrollSync?: () => void;
 }) {
   const [colWidths, setColWidths] = useState(loadWidths);
   const [colVisible, setColVisible] = useState(loadVisible);
@@ -212,8 +217,8 @@ export function TaskList({
   };
 
   return (
-    <div className={cn("space-y-2", resizing && "select-none")}>
-      <div className="flex h-[40px] items-center justify-between overflow-hidden rounded-md border bg-card px-2">
+    <div className={cn("flex min-h-0 flex-col gap-2", resizing && "select-none")}>
+      <div className="flex h-[40px] shrink-0 items-center justify-between overflow-hidden rounded-md border bg-card px-2">
         <div className="text-xs font-semibold">Tareas</div>
         <div className="flex items-center gap-1">
           <DropdownMenu>
@@ -266,10 +271,16 @@ export function TaskList({
           </Button>
         </div>
       </div>
-      <div className="rounded-lg border bg-card">
-        <ProjectTimeBar projectStart={projectStart} projectEnd={projectEnd} tasks={tasks} />
+      <div
+        ref={scrollRef}
+        onScroll={onScrollSync}
+        className="gantt-scroll min-h-0 overflow-y-auto rounded-lg border bg-card"
+      >
+        <div className="sticky top-0 z-20 bg-card">
+          <ProjectTimeBar projectStart={projectStart} projectEnd={projectEnd} tasks={tasks} />
+        </div>
         <div
-          className="grid h-[30px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+          className="sticky top-[44px] z-[15] grid h-[30px] items-center gap-1 border-b bg-muted/80 px-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground backdrop-blur"
           style={gridStyle}
         >
           <div>Tarea</div>
@@ -301,6 +312,8 @@ export function TaskList({
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           {walk(null)}
         </DndContext>
+        {/* Iguala el scrollTop máximo: el panel derecho pierde 10px de alto por su scrollbar horizontal */}
+        <div aria-hidden className="h-[10px]" />
       </div>
     </div>
   );
@@ -421,12 +434,15 @@ function SortableRow({
       ref={setNodeRef}
       style={{ ...style, ...gridStyle }}
       data-task-row
+      data-row-id={task.id}
       className={cn(
-        "grid h-8 cursor-pointer items-center gap-1 border-b px-2 text-xs hover:bg-accent/30",
+        "grid h-8 cursor-pointer items-center gap-1 border-b px-2 text-xs",
         isSelected && "bg-accent/50",
         isDragging && "z-10 bg-accent/20 shadow-md",
       )}
       onClick={() => onSelect(task.id)}
+      onMouseEnter={() => setHoveredTask(task.id)}
+      onMouseLeave={() => setHoveredTask(null)}
     >
       <div className="flex min-w-0 items-center gap-0.5" style={{ paddingLeft: depth * 12 }}>
         <button

@@ -6,7 +6,14 @@
       "title": "Discovery",
       "assignee": "Plain Concepts",
       "progress": 100,
-      "comments": [],
+      "comments": [
+        {
+          "id": "pzfro1qy",
+          "author": "juan",
+          "text": "hola",
+          "createdAt": "2026-07-17T08:50:16.038Z"
+        }
+      ],
       "createdAt": "2026-07-14",
       "position": 0,
       "initialStartDate": "2026-05-04",
@@ -447,6 +454,6 @@
   "settings": {
     "name": "Vodafone",
     "startDate": "2026-05-04",
-    "endDate": "2026-09-30"
+    "endDate": "2026-11-30"
   }
 }

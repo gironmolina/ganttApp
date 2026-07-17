@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { store, useTasks, type Task, todayISO } from "@/lib/gantt-store";
 import { useSettings } from "@/lib/settings-store";
 import { GanttChart } from "@/components/gantt/GanttChart";
@@ -79,6 +79,28 @@ function Index() {
 
   const { order, depth, numbers } = useMemo(() => buildOrder(tasks, collapsed), [tasks, collapsed]);
   const selected = tasks.find((t) => t.id === selectedId) ?? null;
+
+  const leftScrollRef = useRef<HTMLDivElement>(null);
+  const rightScrollRef = useRef<HTMLDivElement>(null);
+  const isSyncingScroll = useRef(false);
+
+  const syncScroll = (
+    srcRef: React.RefObject<HTMLDivElement | null>,
+    dstRef: React.RefObject<HTMLDivElement | null>,
+  ) => {
+    const src = srcRef.current;
+    const dst = dstRef.current;
+    if (!src || !dst) return;
+    if (isSyncingScroll.current) {
+      // Evento eco del scrollTop programático en el otro panel
+      isSyncingScroll.current = false;
+      return;
+    }
+    // También filtra los scrolls solo-horizontales del panel derecho
+    if (dst.scrollTop === src.scrollTop) return;
+    isSyncingScroll.current = true;
+    dst.scrollTop = src.scrollTop;
+  };
 
   // Cierra el editor al hacer click fuera, salvo si el click es en una barra de
   // tarea, en una fila del listado, dentro del propio editor, o en una barra de
@@ -170,8 +192,8 @@ function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/50 backdrop-blur">
+    <div className="flex h-screen flex-col bg-background">
+      <header className="shrink-0 border-b bg-card/50 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
           <div>
             <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
@@ -223,8 +245,8 @@ function Index() {
         </div>
       </header>
 
-      <main className="px-4 py-4">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      <main className="min-h-0 flex-1 px-4 py-4">
+        <div className="grid h-full min-h-0 gap-3 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
           <TaskList
             order={order}
             tasks={tasks}
@@ -237,8 +259,10 @@ function Index() {
             selectedId={selectedId}
             projectStart={settings.startDate}
             projectEnd={settings.endDate}
+            scrollRef={leftScrollRef}
+            onScrollSync={() => syncScroll(leftScrollRef, rightScrollRef)}
           />
-          <div className="space-y-2">
+          <div className="flex min-h-0 flex-col gap-2">
             <Legend />
             <GanttChart
               tasks={tasks}
@@ -247,6 +271,8 @@ function Index() {
               selectedId={selectedId}
               projectStart={settings.startDate}
               projectEnd={settings.endDate}
+              scrollRef={rightScrollRef}
+              onScrollSync={() => syncScroll(rightScrollRef, leftScrollRef)}
             />
           </div>
         </div>
@@ -304,7 +330,7 @@ function Legend() {
     { l: "Fuera de proyecto", overtime: true },
   ];
   return (
-    <div className="flex h-[40px] flex-wrap items-center gap-3 rounded-md border bg-card px-3 text-xs">
+    <div className="flex h-[40px] shrink-0 flex-wrap items-center gap-3 rounded-md border bg-card px-3 text-xs">
       {items.map((i) => (
         <div key={i.l} className="flex items-center gap-1.5">
           {"arrow" in i ? (

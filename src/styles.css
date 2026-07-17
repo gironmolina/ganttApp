@@ -101,3 +101,28 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
+
+/* Unlayered so it wins over Tailwind utilities (e.g. zebra bg-muted/20) */
+.row-hovered {
+  background-color: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+/* Always-visible scrollbars for the gantt panes (macOS overlay scrollbars hide otherwise).
+   scrollbar-width only where ::-webkit-scrollbar doesn't exist (Firefox): in Chrome,
+   setting scrollbar-width disables the ::-webkit-scrollbar styling below. */
+@supports not selector(::-webkit-scrollbar) {
+  .gantt-scroll {
+    scrollbar-width: thin;
+  }
+}
+.gantt-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.gantt-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+.gantt-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
