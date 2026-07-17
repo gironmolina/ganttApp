@@ -389,7 +389,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-10-08",
+      "initialEndDate": "2026-12-03",
+      "estimatedStartDate": "2026-11-30",
+      "estimatedEndDate": "2027-01-25"
     },
     {
       "id": "x7eh75xc",
@@ -400,7 +404,11 @@
       "progress": 0,
       "blocks": [],
       "comments": [],
-      "createdAt": "2026-07-16"
+      "createdAt": "2026-07-16",
+      "initialStartDate": "2026-07-01",
+      "initialEndDate": "2026-09-25",
+      "estimatedStartDate": "2026-07-01",
+      "estimatedEndDate": "2026-11-17"
     },
     {
       "id": "sfltwu52",
