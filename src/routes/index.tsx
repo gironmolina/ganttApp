@@ -319,7 +319,7 @@ function Stat({
 
 function Legend() {
   const items = [
-    { c: "var(--status-progress)", l: "Barra de tarea" },
+    { c: "var(--status-progress)", l: "On track" },
     { c: "var(--status-complete)", l: "Completada", complete: true },
     { c: "black", l: "Planificación inicial", solid: true },
     { c: "rgb(156,163,175)", l: "Estimada", dash: true },
