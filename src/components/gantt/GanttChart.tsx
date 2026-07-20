@@ -113,6 +113,7 @@ export function GanttChart({
                   "flex flex-col items-center justify-center border-r py-1 text-[10px]",
                   isFriday && "border-r-border/80",
                   isToday && "bg-[var(--today)]/15 font-semibold text-[var(--today)]",
+                  !isToday && i % 2 === 1 && "bg-muted/10",
                 )}
                 style={{ width: COL_WIDTH, minWidth: COL_WIDTH }}
               >
@@ -291,6 +292,7 @@ export function GanttChart({
                       className={cn(
                         "border-r border-border/40",
                         wd.getDay() === 5 && "border-r-border",
+                        i % 2 === 1 && "bg-muted/10",
                       )}
                       style={{ width: COL_WIDTH, minWidth: COL_WIDTH }}
                     />
