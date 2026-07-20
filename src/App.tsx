@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Component, type ReactNode } from "react";
 import { GanttPage } from "./components/gantt/GanttPage";
+import { Toaster } from "@/components/ui/sonner";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <GanttPage />
+        <Toaster position="bottom-right" richColors />
       </ErrorBoundary>
     </QueryClientProvider>
   );

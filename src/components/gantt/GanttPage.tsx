@@ -3,6 +3,7 @@ import { store, useTasks, type Task, todayISO } from "@/lib/gantt-store";
 import { useSettings } from "@/lib/settings-store";
 import { useIsDirty } from "@/lib/dirty-store";
 import { useLayerVisibility, toggleLayer, type LayerKey } from "@/lib/layer-visibility";
+import { computeSchedule } from "@/lib/critical-path";
 import { cn } from "@/lib/utils";
 import { GanttChart } from "@/components/gantt/GanttChart";
 import { TaskList } from "@/components/gantt/TaskList";
@@ -72,6 +73,7 @@ export function GanttPage() {
   }, [dirty]);
 
   const { order, depth, numbers } = useMemo(() => buildOrder(tasks, collapsed), [tasks, collapsed]);
+  const schedule = useMemo(() => computeSchedule(tasks), [tasks]);
   const selected = tasks.find((t) => t.id === selectedId) ?? null;
 
   const leftScrollRef = useRef<HTMLDivElement>(null);
@@ -265,6 +267,7 @@ export function GanttPage() {
               scrollRef={rightScrollRef}
               onScrollSync={() => syncScroll(rightScrollRef, leftScrollRef)}
               layerVisibility={layerVisibility}
+              schedule={schedule}
             />
           </div>
         </div>
@@ -281,6 +284,7 @@ export function GanttPage() {
             onClose={() => setSelectedId(null)}
             onAddSubtask={(pid) => addTask(pid)}
             projectStartDate={settings.startDate}
+            schedule={schedule}
           />
         </aside>
       )}
@@ -331,6 +335,8 @@ function Legend() {
     { c: "var(--status-delayed)", l: "Retrasado", key: "delayed" },
     { c: "var(--today)", l: "Retraso inicio", key: "startDelay", arrow: true },
     { l: "Fuera de proyecto", key: "overtime", overtime: true },
+    { c: "var(--muted-foreground)", l: "Dependencias", key: "dependencies", arrow: true },
+    { c: "var(--status-blocked)", l: "Ruta crítica", key: "criticalPath" },
   ];
   return (
     <div className="flex h-[40px] shrink-0 flex-wrap items-center gap-3 rounded-md border bg-card px-3 text-xs">

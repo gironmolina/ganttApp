@@ -4,6 +4,7 @@ import { todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
 import { setHoveredTask } from "@/lib/hover-sync";
 import type { LayerKey } from "@/lib/layer-visibility";
+import type { ScheduleInfo } from "@/lib/critical-path";
 import {
   COL_WIDTH,
   ROW_HEIGHT,
@@ -25,6 +26,7 @@ export function GanttChart({
   scrollRef,
   onScrollSync,
   layerVisibility,
+  schedule,
 }: {
   tasks: Task[];
   order: Task[];
@@ -35,6 +37,7 @@ export function GanttChart({
   scrollRef?: React.Ref<HTMLDivElement>;
   onScrollSync?: () => void;
   layerVisibility: Record<LayerKey, boolean>;
+  schedule?: Map<string, ScheduleInfo>;
 }) {
   const { workdays, dateToIndex, weekStarts, projectEndIdx } = useMemo(
     () => buildTimeline(tasks, projectStart, projectEnd),
@@ -48,6 +51,67 @@ export function GanttChart({
   const todayIso = todayISO();
   const todayIdx = dateToIndex.has(todayIso) ? dateToIndex.get(todayIso)! : null;
   const todayOffset = todayIdx !== null ? todayIdx * COL_WIDTH + COL_WIDTH / 2 : -1;
+
+  // Posición pixel de la barra base (estimada→inicial) de cada tarea visible, más
+  // su índice de fila. Se usa para dibujar las flechas de dependencia entre barras.
+  const barPos = useMemo(() => {
+    const map = new Map<string, { rowIdx: number; left: number; right: number }>();
+    order.forEach((task, rowIdx) => {
+      const s = task.estimatedStartDate || task.initialStartDate;
+      const e = task.estimatedEndDate || task.initialEndDate;
+      if (!s || !e) return;
+      const sIdx = findDateIndex(s, "start", workdays, dateToIndex);
+      const eIdx = findDateIndex(e, "end", workdays, dateToIndex);
+      const from = Math.min(sIdx, eIdx);
+      const to = Math.max(sIdx, eIdx);
+      map.set(task.id, { rowIdx, left: from * COL_WIDTH, right: (to + 1) * COL_WIDTH });
+    });
+    return map;
+  }, [order, workdays, dateToIndex]);
+
+  // Flechas de dependencia: para cada tarea con predecesores visibles, un
+  // trazado ortogonal del predecesor al sucesor según el tipo (FS/FF/SS/SF).
+  const arrows = useMemo(() => {
+    const list: { id: string; d: string }[] = [];
+    const yOf = (rowIdx: number) => rowIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
+    for (const task of order) {
+      const succ = barPos.get(task.id);
+      if (!succ) continue;
+      for (const dep of task.dependencies ?? []) {
+        const pred = barPos.get(dep.predecessorId);
+        if (!pred) continue; // predecesor colapsado/oculto o sin fechas
+        const x1 = dep.type === "SS" || dep.type === "SF" ? pred.left : pred.right;
+        const x2 = dep.type === "SS" || dep.type === "FS" ? succ.left : succ.right;
+        const y1 = yOf(pred.rowIdx);
+        const y2 = yOf(succ.rowIdx);
+
+        let d: string;
+        if (dep.type === "FS" && pred.rowIdx !== succ.rowIdx) {
+          // Sale a la mitad del día siguiente al fin del predecesor, baja hasta
+          // la línea que separa esa fila de la del sucesor, se desplaza hasta la
+          // mitad del día anterior al inicio del sucesor, baja al centro de esa
+          // fila y entra al inicio de la barra.
+          const goingDown = succ.rowIdx > pred.rowIdx;
+          const rowBoundary = goingDown ? succ.rowIdx * ROW_HEIGHT : (succ.rowIdx + 1) * ROW_HEIGHT;
+          const outX = x1 + COL_WIDTH / 2;
+          const inX = x2 - COL_WIDTH / 2;
+          d = `M ${x1} ${y1} H ${outX} V ${rowBoundary} H ${inX} V ${y2} H ${x2}`;
+        } else if (dep.type === "FF" && pred.rowIdx !== succ.rowIdx) {
+          // Sale a la mitad del día siguiente al fin de la tarea final (el
+          // sucesor), baja al centro de esa fila y entra por el fin de la barra.
+          const outX = x2 + COL_WIDTH / 2;
+          d = `M ${x1} ${y1} H ${outX} V ${y2} H ${x2}`;
+        } else {
+          const midX = x2 >= x1 ? x2 - 8 : x1 + 8;
+          d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
+        }
+        list.push({ id: dep.id, d });
+      }
+    }
+    return list;
+  }, [order, barPos]);
+
+  const totalRowsHeight = order.length * ROW_HEIGHT;
 
   // Crosshair de columna: mutación DOM directa sobre dos overlays para no
   // re-renderizar el árbol en cada mousemove.
@@ -304,6 +368,22 @@ export function GanttChart({
                   ))}
                 </div>
 
+                {/* Holgura (slack): barra fantasma tras la barra base */}
+                {layerVisibility.criticalPath &&
+                  barUnionWidth > 0 &&
+                  (schedule?.get(task.id)?.totalFloat ?? 0) > 0 && (
+                    <div
+                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded-sm bg-[var(--status-progress)]/20"
+                      title={`Holgura: ${schedule!.get(task.id)!.totalFloat} días hábiles`}
+                      style={{
+                        left: barUnionRight,
+                        width: schedule!.get(task.id)!.totalFloat * COL_WIDTH,
+                        height: 10,
+                        zIndex: 0,
+                      }}
+                    />
+                  )}
+
                 {/* Clickable area covering all drawn bar segments — zIndex 0 */}
                 {barUnionWidth > 0 && (
                   <button
@@ -314,6 +394,16 @@ export function GanttChart({
                     style={{ left: barUnionLeft, width: barUnionWidth, height: 22, zIndex: 0 }}
                   />
                 )}
+
+                {/* Resaltado de ruta crítica: contorno rojo sobre la barra base */}
+                {layerVisibility.criticalPath &&
+                  barUnionWidth > 0 &&
+                  schedule?.get(task.id)?.critical && (
+                    <div
+                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded ring-2 ring-[var(--status-blocked)]"
+                      style={{ left: barUnionLeft, width: barUnionWidth, height: 24, zIndex: 7 }}
+                    />
+                  )}
 
                 {/* Actual bar — zIndex 1 */}
                 {layerVisibility.onTrack && hasActual && (
@@ -492,6 +582,42 @@ export function GanttChart({
             className="pointer-events-none absolute inset-y-0 z-0 bg-accent/20"
             style={{ display: "none", width: COL_WIDTH }}
           />
+
+          {/* Flechas de dependencia */}
+          {layerVisibility.dependencies && arrows.length > 0 && (
+            <svg
+              className="pointer-events-none absolute left-0 top-0"
+              width={totalWidth}
+              height={totalRowsHeight}
+              style={{ zIndex: 10 }}
+            >
+              <defs>
+                <marker
+                  id="dep-arrowhead"
+                  markerWidth="6"
+                  markerHeight="6"
+                  refX="5"
+                  refY="3"
+                  orient="auto"
+                >
+                  <polygon points="0,0 6,3 0,6" fill="var(--muted-foreground)" />
+                </marker>
+              </defs>
+              {arrows.map((a) => {
+                return (
+                  <path
+                    key={a.id}
+                    d={a.d}
+                    fill="none"
+                    stroke="var(--muted-foreground)"
+                    strokeWidth="1.5"
+                    strokeOpacity="0.7"
+                    markerEnd="url(#dep-arrowhead)"
+                  />
+                );
+              })}
+            </svg>
+          )}
         </div>
       </div>
     </div>

@@ -26,6 +26,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     initialEndDate: "2026-05-15",
     progress: 0,
     blocks: [],
+    dependencies: [],
     comments: [],
     createdAt: "2026-05-01",
     ...overrides,

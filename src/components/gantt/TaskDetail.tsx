@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { store, type Task, type BlockRange, type Priority } from "@/lib/gantt-store";
+import { toast } from "sonner";
+import {
+  store,
+  type Task,
+  type BlockRange,
+  type Priority,
+  type DependencyType,
+} from "@/lib/gantt-store";
 import { countWorkdays } from "@/lib/gantt-utils";
+import { validateDependency, type ScheduleInfo } from "@/lib/critical-path";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,12 +38,14 @@ export function TaskDetail({
   onClose,
   onAddSubtask,
   projectStartDate,
+  schedule,
 }: {
   task: Task;
   allTasks: Task[];
   onClose: () => void;
   onAddSubtask: (parentId: string) => void;
   projectStartDate?: string;
+  schedule?: Map<string, ScheduleInfo>;
 }) {
   const [commentAuthor, setCommentAuthor] = useState("");
   const [commentText, setCommentText] = useState("");
@@ -421,6 +431,127 @@ export function TaskDetail({
                 </p>
               )}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Dependencias section */}
+      <div className="rounded border">
+        <button
+          className="flex w-full items-center gap-1 px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
+          onClick={() => toggleSection("dependencias")}
+        >
+          {isCollapsed("dependencias") ? (
+            <ChevronRight className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )}
+          Dependencias
+          <Badge variant="secondary" className="ml-1 h-3.5 px-1 text-[8px]">
+            {task.dependencies.length}
+          </Badge>
+        </button>
+        {!isCollapsed("dependencias") && (
+          <div className="space-y-1.5 px-2 pb-2">
+            {(() => {
+              const info = schedule?.get(task.id);
+              if (!info) return null;
+              return (
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <span className="text-muted-foreground">
+                    Holgura: <span className="font-medium text-foreground">{info.totalFloat}</span>{" "}
+                    {info.totalFloat === 1 ? "día hábil" : "días hábiles"}
+                  </span>
+                  {info.critical && (
+                    <Badge
+                      className="h-3.5 border-0 px-1 text-[8px] text-white"
+                      style={{ backgroundColor: "var(--status-blocked)" }}
+                    >
+                      Ruta crítica
+                    </Badge>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Añadir predecesor */}
+            <Select
+              value=""
+              onValueChange={(predId) => {
+                const res = validateDependency(allTasks, task.id, predId);
+                if (!res.ok) {
+                  toast.error(res.reason);
+                  return;
+                }
+                store.addDependency(task.id, predId, "FS");
+              }}
+            >
+              <SelectTrigger className="h-7 text-[10px]">
+                <SelectValue placeholder="+ Añadir tarea predecesora..." />
+              </SelectTrigger>
+              <SelectContent>
+                {allTasks
+                  .filter(
+                    (t) =>
+                      t.id !== task.id &&
+                      !task.dependencies.some((d) => d.predecessorId === t.id),
+                  )
+                  .map((t) => (
+                    <SelectItem key={t.id} value={t.id} className="text-[10px]">
+                      {t.title}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            {task.dependencies.length === 0 && (
+              <p className="text-[10px] text-muted-foreground">Sin dependencias.</p>
+            )}
+            {task.dependencies.map((dep) => {
+              const pred = allTasks.find((t) => t.id === dep.predecessorId);
+              return (
+                <div
+                  key={dep.id}
+                  className="flex items-center gap-1.5 rounded border bg-muted/30 p-1.5"
+                >
+                  <span className="min-w-0 flex-1 truncate text-[10px]" title={pred?.title}>
+                    {pred?.title ?? "(tarea eliminada)"}
+                  </span>
+                  <Select
+                    value={dep.type}
+                    onValueChange={(v) =>
+                      store.updateDependency(task.id, dep.id, v as DependencyType)
+                    }
+                  >
+                    <SelectTrigger className="h-6 w-[132px] text-[10px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FS" className="text-[10px]">
+                        FS · Fin → Inicio
+                      </SelectItem>
+                      <SelectItem value="FF" className="text-[10px]">
+                        FF · Fin → Fin
+                      </SelectItem>
+                      <SelectItem value="SS" className="text-[10px]">
+                        SS · Inicio → Inicio
+                      </SelectItem>
+                      <SelectItem value="SF" className="text-[10px]">
+                        SF · Inicio → Fin
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-xs"
+                    onClick={() => store.removeDependency(task.id, dep.id)}
+                  >
+                    ×
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

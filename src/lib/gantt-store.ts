@@ -8,6 +8,7 @@ import { markDirty } from "./dirty-store";
 
 export type BlockType = "partial" | "total";
 export type Priority = "high" | "medium" | "low" | "none";
+export type DependencyType = "FS" | "FF" | "SF" | "SS";
 
 export interface BlockRange {
   id: string;
@@ -15,6 +16,13 @@ export interface BlockRange {
   reason?: string;
   startDate: string;
   endDate: string;
+}
+
+export interface Dependency {
+  id: string;
+  /** id de la tarea de la que depende esta (el predecesor). */
+  predecessorId: string;
+  type: DependencyType;
 }
 
 export interface Comment {
@@ -39,11 +47,12 @@ export interface Task {
   actualEndDate?: string;
   progress: number;
   blocks: BlockRange[];
+  dependencies: Dependency[];
   comments: Comment[];
   createdAt: string;
 }
 
-const STORAGE_KEY = "gantt-tasks-v4";
+const STORAGE_KEY = "gantt-tasks-v5";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -127,6 +136,11 @@ function migrateTasks(taskList: any[]): Task[] {
       migrated.blocks = [];
     }
 
+    // v4 -> v5: dependencias entre tareas
+    if (!migrated.dependencies) {
+      migrated.dependencies = [];
+    }
+
     if (!migrated.priority) {
       migrated.priority = "none";
     }
@@ -139,6 +153,9 @@ function loadFromLocalStorage(): Task[] {
   if (typeof window === "undefined") return [];
   try {
     let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      raw = localStorage.getItem("gantt-tasks-v4");
+    }
     if (!raw) {
       raw = localStorage.getItem("gantt-tasks-v3");
     }
@@ -238,6 +255,7 @@ export const store = {
           : partial.estimatedEndDate || undefined,
       progress: partial.progress ?? 0,
       blocks: partial.blocks ?? [],
+      dependencies: partial.dependencies ?? [],
       comments: [],
       createdAt: t,
     };
@@ -360,6 +378,33 @@ export const store = {
     tasks = tasks.map((t) =>
       t.id === taskId
         ? { ...t, comments: t.comments.map((c) => (c.id === commentId ? { ...c, text } : c)) }
+        : t,
+    );
+    persist();
+  },
+  addDependency(successorId: string, predecessorId: string, type: DependencyType) {
+    tasks = tasks.map((t) =>
+      t.id === successorId
+        ? { ...t, dependencies: [...t.dependencies, { id: uid(), predecessorId, type }] }
+        : t,
+    );
+    persist();
+  },
+  removeDependency(successorId: string, depId: string) {
+    tasks = tasks.map((t) =>
+      t.id === successorId
+        ? { ...t, dependencies: t.dependencies.filter((d) => d.id !== depId) }
+        : t,
+    );
+    persist();
+  },
+  updateDependency(successorId: string, depId: string, type: DependencyType) {
+    tasks = tasks.map((t) =>
+      t.id === successorId
+        ? {
+            ...t,
+            dependencies: t.dependencies.map((d) => (d.id === depId ? { ...d, type } : d)),
+          }
         : t,
     );
     persist();

@@ -9,7 +9,9 @@ export type LayerKey =
   | "totalBlock"
   | "delayed"
   | "startDelay"
-  | "overtime";
+  | "overtime"
+  | "dependencies"
+  | "criticalPath";
 
 const STORAGE_KEY = "gantt-layer-visibility";
 
@@ -23,6 +25,8 @@ const defaults: Record<LayerKey, boolean> = {
   delayed: true,
   startDelay: true,
   overtime: true,
+  dependencies: true,
+  criticalPath: false,
 };
 
 function load(): Record<LayerKey, boolean> {
