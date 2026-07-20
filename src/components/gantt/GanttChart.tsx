@@ -3,6 +3,7 @@ import type { Task } from "@/lib/gantt-store";
 import { todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
 import { setHoveredTask } from "@/lib/hover-sync";
+import type { LayerKey } from "@/lib/layer-visibility";
 import {
   COL_WIDTH,
   ROW_HEIGHT,
@@ -23,6 +24,7 @@ export function GanttChart({
   projectEnd,
   scrollRef,
   onScrollSync,
+  layerVisibility,
 }: {
   tasks: Task[];
   order: Task[];
@@ -32,6 +34,7 @@ export function GanttChart({
   projectEnd?: string;
   scrollRef?: React.Ref<HTMLDivElement>;
   onScrollSync?: () => void;
+  layerVisibility: Record<LayerKey, boolean>;
 }) {
   const { workdays, dateToIndex, weekStarts, projectEndIdx } = useMemo(
     () => buildTimeline(tasks, projectStart, projectEnd),
@@ -163,16 +166,18 @@ export function GanttChart({
           </div>
 
           {/* Overtime zone (after project end) */}
-          {projectEndIdx !== undefined && projectEndIdx + 1 < workdays.length && (
-            <div
-              className="pointer-events-none absolute top-0 h-full"
-              style={{
-                left: (projectEndIdx + 1) * COL_WIDTH,
-                right: 0,
-                backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 4px, oklch(0.7 0.15 50 / 0.15) 4px, oklch(0.7 0.15 50 / 0.15) 8px)`,
-              }}
-            />
-          )}
+          {layerVisibility.overtime &&
+            projectEndIdx !== undefined &&
+            projectEndIdx + 1 < workdays.length && (
+              <div
+                className="pointer-events-none absolute top-0 h-full"
+                style={{
+                  left: (projectEndIdx + 1) * COL_WIDTH,
+                  right: 0,
+                  backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 4px, oklch(0.7 0.15 50 / 0.15) 4px, oklch(0.7 0.15 50 / 0.15) 8px)`,
+                }}
+              />
+            )}
 
           {order.map((task, rowIdx) => {
             const progress = computeProgress(task);
@@ -311,7 +316,7 @@ export function GanttChart({
                 )}
 
                 {/* Actual bar — zIndex 1 */}
-                {hasActual && (
+                {layerVisibility.onTrack && hasActual && (
                   <button
                     data-task-bar
                     onClick={() => onSelect(task.id)}
@@ -326,7 +331,7 @@ export function GanttChart({
                 )}
 
                 {/* Delayed segment — zIndex 1 */}
-                {hasActual && isDelayed && effectiveDelayWidth > 0 && (
+                {layerVisibility.delayed && hasActual && isDelayed && effectiveDelayWidth > 0 && (
                   <div
                     className="pointer-events-none absolute top-1/2 -translate-y-1/2 bg-[var(--status-delayed)]"
                     style={{
@@ -340,37 +345,49 @@ export function GanttChart({
                 )}
 
                 {/* Block range lines — zIndex 2 */}
-                {task.blocks.map((block) => {
-                  const bStartIdx = findDateIndex(block.startDate, "start", workdays, dateToIndex);
-                  const bEndIdx = findDateIndex(block.endDate, "end", workdays, dateToIndex);
-                  const bFrom = Math.min(bStartIdx, bEndIdx);
-                  const bTo = Math.max(bStartIdx, bEndIdx);
-                  const bLeft = bFrom * COL_WIDTH;
-                  const bWidth = Math.max(2, (bTo - bFrom + 1) * COL_WIDTH);
-                  const isTotal = block.type === "total";
-                  return (
-                    <div
-                      key={block.id}
-                      className={cn(
-                        "pointer-events-none absolute top-1/2 -translate-y-1/2 border-l-2 border-r-2 border-[var(--status-blocked)]",
-                        isTotal && "bg-[var(--status-blocked)]",
-                      )}
-                      style={{
-                        left: bLeft,
-                        width: bWidth,
-                        height: 22,
-                        zIndex: 2,
-                        ...(!isTotal && {
-                          backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 4px, var(--status-blocked) 4px, var(--status-blocked) 5.5px)`,
-                        }),
-                      }}
-                      title={`${isTotal ? "Bloqueo total" : "Bloqueo parcial"}${block.reason ? `: ${block.reason}` : ""} · ${block.startDate} → ${block.endDate}`}
-                    />
-                  );
-                })}
+                {task.blocks
+                  .filter((block) =>
+                    block.type === "total"
+                      ? layerVisibility.totalBlock
+                      : layerVisibility.partialBlock,
+                  )
+                  .map((block) => {
+                    const bStartIdx = findDateIndex(
+                      block.startDate,
+                      "start",
+                      workdays,
+                      dateToIndex,
+                    );
+                    const bEndIdx = findDateIndex(block.endDate, "end", workdays, dateToIndex);
+                    const bFrom = Math.min(bStartIdx, bEndIdx);
+                    const bTo = Math.max(bStartIdx, bEndIdx);
+                    const bLeft = bFrom * COL_WIDTH;
+                    const bWidth = Math.max(2, (bTo - bFrom + 1) * COL_WIDTH);
+                    const isTotal = block.type === "total";
+                    return (
+                      <div
+                        key={block.id}
+                        className={cn(
+                          "pointer-events-none absolute top-1/2 -translate-y-1/2 border-l-2 border-r-2 border-[var(--status-blocked)]",
+                          isTotal && "bg-[var(--status-blocked)]",
+                        )}
+                        style={{
+                          left: bLeft,
+                          width: bWidth,
+                          height: 22,
+                          zIndex: 2,
+                          ...(!isTotal && {
+                            backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 4px, var(--status-blocked) 4px, var(--status-blocked) 5.5px)`,
+                          }),
+                        }}
+                        title={`${isTotal ? "Bloqueo total" : "Bloqueo parcial"}${block.reason ? `: ${block.reason}` : ""} · ${block.startDate} → ${block.endDate}`}
+                      />
+                    );
+                  })}
 
                 {/* Progress border overlay — zIndex 3 */}
-                {progress > 0 &&
+                {layerVisibility.completed &&
+                  progress > 0 &&
                   (() => {
                     const barL = hasActual ? aLeft : hasEstimated ? eLeft : iLeft;
                     const barW = hasActual ? aWidth : hasEstimated ? eWidth : iWidth;
@@ -389,10 +406,11 @@ export function GanttChart({
                   })()}
 
                 {/* Estimated bar — zIndex 4, dashed gray */}
-                {hasEstimated &&
+                {layerVisibility.estimated &&
+                  hasEstimated &&
                   (hasActual ? (
                     <div
-                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-dashed bg-transparent border-gray-400"
+                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-solid bg-transparent border-black/60"
                       style={{ left: eLeft, width: eWidth, height: 22, zIndex: 4 }}
                     />
                   ) : (
@@ -400,7 +418,7 @@ export function GanttChart({
                       data-task-bar
                       onClick={() => onSelect(task.id)}
                       className={cn(
-                        "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden border-2 border-dashed bg-transparent border-gray-400 text-left text-xs transition hover:brightness-110",
+                        "absolute top-1/2 flex cursor-pointer -translate-y-1/2 items-center overflow-hidden border-2 border-solid bg-transparent border-black/60 text-left text-xs transition hover:brightness-110",
                         isParent && "opacity-90",
                       )}
                       style={{ left: eLeft, width: eWidth, height: 22, zIndex: 4 }}
@@ -408,16 +426,16 @@ export function GanttChart({
                     />
                   ))}
 
-                {/* Initial bar — zIndex 5, dashed black */}
-                {hasInitial && (
+                {/* Initial bar — zIndex 5, solid black */}
+                {layerVisibility.initial && hasInitial && (
                   <div
-                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-solid bg-transparent border-black/60"
+                    className="pointer-events-none absolute top-1/2 -translate-y-1/2 border-2 border-dashed bg-transparent border-gray-400"
                     style={{ left: iLeft, width: iWidth, height: 22, zIndex: 5 }}
                   />
                 )}
 
                 {/* Start delay arrow — zIndex 6 */}
-                {isStartDelayed && startDelayWidth > 0 && (
+                {layerVisibility.startDelay && isStartDelayed && startDelayWidth > 0 && (
                   <svg
                     className="pointer-events-none absolute top-0"
                     style={{

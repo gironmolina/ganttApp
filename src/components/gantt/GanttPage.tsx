@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { store, useTasks, type Task, todayISO } from "@/lib/gantt-store";
 import { useSettings } from "@/lib/settings-store";
 import { useIsDirty } from "@/lib/dirty-store";
+import { useLayerVisibility, toggleLayer, type LayerKey } from "@/lib/layer-visibility";
+import { cn } from "@/lib/utils";
 import { GanttChart } from "@/components/gantt/GanttChart";
 import { TaskList } from "@/components/gantt/TaskList";
 import { TaskDetail } from "@/components/gantt/TaskDetail";
@@ -55,6 +57,7 @@ export function GanttPage() {
   const tasks = useTasks();
   const settings = useSettings();
   const dirty = useIsDirty();
+  const layerVisibility = useLayerVisibility();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -261,6 +264,7 @@ export function GanttPage() {
               projectEnd={settings.endDate}
               scrollRef={rightScrollRef}
               onScrollSync={() => syncScroll(rightScrollRef, leftScrollRef)}
+              layerVisibility={layerVisibility}
             />
           </div>
         </div>
@@ -306,63 +310,85 @@ function Stat({
 }
 
 function Legend() {
-  const items = [
-    { c: "var(--status-progress)", l: "On track" },
-    { c: "var(--status-complete)", l: "Completada", complete: true },
-    { c: "black", l: "Planificación inicial", solid: true },
-    { c: "rgb(156,163,175)", l: "Estimada", dash: true },
-    { c: "var(--status-blocked)", l: "Bloqueo parcial", partialBlock: true },
-    { c: "var(--status-blocked)", l: "Bloqueo total" },
-    { c: "var(--status-delayed)", l: "Retrasado" },
-    { c: "var(--today)", l: "Retraso inicio", arrow: true },
-    { l: "Fuera de proyecto", overtime: true },
+  const visibility = useLayerVisibility();
+  const items: {
+    c?: string;
+    l: string;
+    key: LayerKey;
+    complete?: boolean;
+    solid?: boolean;
+    dash?: boolean;
+    partialBlock?: boolean;
+    overtime?: boolean;
+    arrow?: boolean;
+  }[] = [
+    { c: "var(--status-progress)", l: "On track", key: "onTrack" },
+    { c: "var(--status-complete)", l: "Completada", key: "completed", complete: true },
+    { c: "rgb(156,163,175)", l: "Planificación inicial", key: "initial", dash: true },
+    { c: "black", l: "Estimada", key: "estimated", solid: true },
+    { c: "var(--status-blocked)", l: "Bloqueo parcial", key: "partialBlock", partialBlock: true },
+    { c: "var(--status-blocked)", l: "Bloqueo total", key: "totalBlock" },
+    { c: "var(--status-delayed)", l: "Retrasado", key: "delayed" },
+    { c: "var(--today)", l: "Retraso inicio", key: "startDelay", arrow: true },
+    { l: "Fuera de proyecto", key: "overtime", overtime: true },
   ];
   return (
     <div className="flex h-[40px] shrink-0 flex-wrap items-center gap-3 rounded-md border bg-card px-3 text-xs">
-      {items.map((i) => (
-        <div key={i.l} className="flex items-center gap-1.5">
-          {"arrow" in i ? (
-            <svg width="16" height="12" className="shrink-0">
-              <line x1="0" y1="6" x2="10" y2="6" stroke={i.c} strokeWidth="2" />
-              <polygon points="16,6 10,2 10,10" fill={i.c} />
-            </svg>
-          ) : "dash" in i ? (
-            <span
-              className="h-3 w-3 shrink-0 border-2 border-dashed bg-transparent"
-              style={{ borderColor: i.c }}
-            />
-          ) : "solid" in i ? (
-            <span
-              className="h-3 w-3 shrink-0 border-2 border-solid bg-transparent"
-              style={{ borderColor: i.c }}
-            />
-          ) : "complete" in i ? (
-            <span
-              className="h-3 w-3 shrink-0 border-[3px] border-solid bg-transparent"
-              style={{ borderColor: i.c }}
-            />
-          ) : "partialBlock" in i ? (
-            <span
-              className="h-3 w-3 shrink-0 border-l-2 border-r-2 border-solid"
-              style={{
-                borderColor: i.c,
-                backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 1.5px, ${i.c} 1.5px, ${i.c} 3px)`,
-              }}
-            />
-          ) : "overtime" in i ? (
-            <span
-              className="h-3 w-3 shrink-0 border-l-2 border-r-2 border-solid"
-              style={{
-                borderColor: "oklch(0.7 0.15 50 / 0.5)",
-                backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 1.5px, oklch(0.7 0.15 50 / 0.3) 1.5px, oklch(0.7 0.15 50 / 0.3) 3px)`,
-              }}
-            />
-          ) : (
-            <span className="h-3 w-3 shrink-0 rounded-sm" style={{ background: i.c }} />
-          )}
-          <span className="text-muted-foreground">{i.l}</span>
-        </div>
-      ))}
+      {items.map((i) => {
+        const visible = visibility[i.key];
+        return (
+          <button
+            key={i.key}
+            onClick={() => toggleLayer(i.key)}
+            className={cn(
+              "flex items-center gap-1.5 cursor-pointer rounded px-0.5 transition-opacity hover:bg-muted/50",
+              !visible && "opacity-40",
+            )}
+            title={visible ? `Ocultar ${i.l}` : `Mostrar ${i.l}`}
+          >
+            {i.arrow ? (
+              <svg width="16" height="12" className="shrink-0">
+                <line x1="0" y1="6" x2="10" y2="6" stroke={i.c} strokeWidth="2" />
+                <polygon points="16,6 10,2 10,10" fill={i.c} />
+              </svg>
+            ) : i.dash ? (
+              <span
+                className="h-3 w-3 shrink-0 border-2 border-dashed bg-transparent"
+                style={{ borderColor: i.c }}
+              />
+            ) : i.solid ? (
+              <span
+                className="h-3 w-3 shrink-0 border-2 border-solid bg-transparent"
+                style={{ borderColor: i.c }}
+              />
+            ) : i.complete ? (
+              <span
+                className="h-3 w-3 shrink-0 border-[3px] border-solid bg-transparent"
+                style={{ borderColor: i.c }}
+              />
+            ) : i.partialBlock ? (
+              <span
+                className="h-3 w-3 shrink-0 border-l-2 border-r-2 border-solid"
+                style={{
+                  borderColor: i.c,
+                  backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 1.5px, ${i.c} 1.5px, ${i.c} 3px)`,
+                }}
+              />
+            ) : i.overtime ? (
+              <span
+                className="h-3 w-3 shrink-0 border-l-2 border-r-2 border-solid"
+                style={{
+                  borderColor: "oklch(0.7 0.15 50 / 0.5)",
+                  backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 1.5px, oklch(0.7 0.15 50 / 0.3) 1.5px, oklch(0.7 0.15 50 / 0.3) 3px)`,
+                }}
+              />
+            ) : (
+              <span className="h-3 w-3 shrink-0 rounded-sm" style={{ background: i.c }} />
+            )}
+            <span className={cn("text-muted-foreground", !visible && "line-through")}>{i.l}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
