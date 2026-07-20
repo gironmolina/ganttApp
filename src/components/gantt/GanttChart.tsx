@@ -101,6 +101,22 @@ export function GanttChart({
           // sucesor), baja al centro de esa fila y entra por el fin de la barra.
           const outX = x2 + COL_WIDTH / 2;
           d = `M ${x1} ${y1} H ${outX} V ${y2} H ${x2}`;
+        } else if (dep.type === "SS" && pred.rowIdx !== succ.rowIdx) {
+          // Sale hacia atrás hasta la mitad de la columna anterior al inicio del
+          // predecesor, baja al centro de la fila del sucesor y entra por el
+          // inicio de esa barra.
+          const outX = x1 - COL_WIDTH / 2;
+          d = `M ${x1} ${y1} H ${outX} V ${y2} H ${x2}`;
+        } else if (dep.type === "SF" && pred.rowIdx !== succ.rowIdx) {
+          // Sale hacia atrás hasta la mitad del día anterior al inicio del
+          // predecesor, baja hasta la línea que separa esa fila de la del
+          // sucesor, se desplaza a la derecha hasta la mitad del día siguiente
+          // al fin del sucesor, baja al centro de esa fila y entra por el fin.
+          const goingDown = succ.rowIdx > pred.rowIdx;
+          const rowBoundary = goingDown ? succ.rowIdx * ROW_HEIGHT : (succ.rowIdx + 1) * ROW_HEIGHT;
+          const outX = x1 - COL_WIDTH / 2;
+          const inX = x2 + COL_WIDTH / 2;
+          d = `M ${x1} ${y1} H ${outX} V ${rowBoundary} H ${inX} V ${y2} H ${x2}`;
         } else {
           const midX = x2 >= x1 ? x2 - 8 : x1 + 8;
           d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
