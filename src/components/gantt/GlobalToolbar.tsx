@@ -5,7 +5,6 @@ import {
   saveProjectFile,
   clearLocalStorage,
   clearFileState,
-  checkFileConflict,
   useLastSavedAt,
 } from "@/lib/json-persist";
 import { useIsDirty, markClean } from "@/lib/dirty-store";
@@ -50,20 +49,12 @@ export function GlobalToolbar() {
   };
 
   const handleSave = async () => {
-    const conflict = await checkFileConflict();
-    if (conflict) {
-      const ok = confirm(
-        "Este archivo fue modificado por otra persona desde que lo abriste. " +
-          "Podés guardar con otro nombre para no sobreescribir.",
-      );
-      if (!ok) return;
-    }
     const tasks = getTasks();
     const settingsRaw = localStorage.getItem("gantt-settings-v1");
     const settings = settingsRaw ? JSON.parse(settingsRaw) : {};
     const projectName = settings.name || "Proyecto";
-    const ok = await saveProjectFile({ tasks, settings }, projectName);
-    if (ok) markClean();
+    const saved = await saveProjectFile({ tasks, settings }, projectName);
+    if (saved) markClean();
   };
 
   return (
