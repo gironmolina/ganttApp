@@ -1,33 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { store, useTasks, type Task, todayISO } from "@/lib/gantt-store";
 import { useSettings } from "@/lib/settings-store";
+import { useIsDirty } from "@/lib/dirty-store";
 import { GanttChart } from "@/components/gantt/GanttChart";
 import { TaskList } from "@/components/gantt/TaskList";
 import { TaskDetail } from "@/components/gantt/TaskDetail";
 import { SettingsDialog } from "@/components/gantt/SettingsDialog";
+import { GlobalToolbar } from "@/components/gantt/GlobalToolbar";
 
 import { CalendarDays, Pencil } from "lucide-react";
-
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Gantt · Planificador de tareas" },
-      {
-        name: "description",
-        content:
-          "Crea, organiza y da seguimiento a tareas y subtareas con un diagrama de Gantt interactivo.",
-      },
-      { property: "og:title", content: "Gantt · Planificador de tareas" },
-      {
-        property: "og:description",
-        content:
-          "Planifica proyectos con Gantt: responsables, fechas, progreso, bloqueos y comentarios.",
-      },
-    ],
-  }),
-  component: Index,
-});
 
 function isScrollbarMouseDown(e: MouseEvent): boolean {
   let el = e.target as HTMLElement | null;
@@ -70,12 +51,22 @@ function buildOrder(tasks: Task[], collapsed: Set<string>) {
   return { order, depth, numbers };
 }
 
-function Index() {
+export function GanttPage() {
   const tasks = useTasks();
   const settings = useSettings();
+  const dirty = useIsDirty();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
 
   const { order, depth, numbers } = useMemo(() => buildOrder(tasks, collapsed), [tasks, collapsed]);
   const selected = tasks.find((t) => t.id === selectedId) ?? null;
@@ -92,19 +83,14 @@ function Index() {
     const dst = dstRef.current;
     if (!src || !dst) return;
     if (isSyncingScroll.current) {
-      // Evento eco del scrollTop programático en el otro panel
       isSyncingScroll.current = false;
       return;
     }
-    // También filtra los scrolls solo-horizontales del panel derecho
     if (dst.scrollTop === src.scrollTop) return;
     isSyncingScroll.current = true;
     dst.scrollTop = src.scrollTop;
   };
 
-  // Cierra el editor al hacer click fuera, salvo si el click es en una barra de
-  // tarea, en una fila del listado, dentro del propio editor, o en una barra de
-  // scroll (para permitir desplazar el Gantt sin cerrar el editor).
   useEffect(() => {
     if (!selectedId) return;
     const onMouseDown = (e: MouseEvent) => {
@@ -194,53 +180,55 @@ function Index() {
   return (
     <div className="flex h-screen flex-col bg-background">
       <header className="shrink-0 border-b bg-card/50 backdrop-blur">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-          <div>
-            <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
-              <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground">
-                <CalendarDays className="h-4 w-4" />
-              </span>
-              {settings.name}
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(true)}
-                title="Editar proyecto"
-                aria-label="Editar proyecto"
-                className="ml-1 grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Hoy es{" "}
-              <span className="font-medium text-foreground">
+        <div className="flex flex-col gap-1 px-6 py-3">
+          <GlobalToolbar />
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+                <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground">
+                  <CalendarDays className="h-4 w-4" />
+                </span>
+                {settings.name}
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(true)}
+                  title="Editar proyecto"
+                  aria-label="Editar proyecto"
+                  className="ml-1 grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </h1>
+              <p className="text-xs text-muted-foreground">
                 {new Date(todayISO()).toLocaleDateString("es", {
-                  weekday: "long",
+                  weekday: "short",
                   day: "numeric",
-                  month: "long",
+                  month: "short",
                   year: "numeric",
                 })}
-              </span>
-              {stats.duration && (
-                <>
-                  {" · "}
-                  Duración del proyecto:{" "}
-                  <span className="font-medium text-foreground">
-                    {stats.duration.workdays} días hábiles
-                  </span>{" "}
-                  <span className="text-muted-foreground">
-                    ({stats.duration.weeks} sem · {stats.duration.days} días naturales) ·{" "}
-                    {stats.duration.start} → {stats.duration.end}
-                  </span>
-                </>
-              )}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Stat label="Tareas" value={stats.total} />
-            <Stat label="Completadas" value={stats.done} accent="var(--status-complete)" />
-            <Stat label="Bloqueadas" value={stats.blocked} accent="var(--status-blocked)" />
-            <Stat label="Progreso medio" value={`${stats.avg}%`} accent="var(--status-progress)" />
+                {stats.duration && (
+                  <>
+                    {" · "}
+                    <span className="font-medium text-foreground">
+                      {stats.duration.workdays} días háb
+                    </span>{" "}
+                    <span className="text-muted-foreground">
+                      ({stats.duration.weeks} sem) · {stats.duration.start} → {stats.duration.end}
+                    </span>
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Stat label="Tareas" value={stats.total} />
+              <Stat label="Completadas" value={stats.done} accent="var(--status-complete)" />
+              <Stat label="Bloqueadas" value={stats.blocked} accent="var(--status-blocked)" />
+              <Stat
+                label="Progreso medio"
+                value={`${stats.avg}%`}
+                accent="var(--status-progress)"
+              />
+            </div>
           </div>
         </div>
       </header>

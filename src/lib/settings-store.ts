@@ -1,5 +1,10 @@
 import { useSyncExternalStore } from "react";
-import { getProjectData, mergeProjectData } from "./json-persist";
+import {
+  autoSaveToLocalStorage,
+  loadFromLocalStorage as loadAutoSave,
+  type ProjectData,
+} from "./json-persist";
+import { markDirty } from "./dirty-store";
 
 export interface ProjectSettings {
   name: string;
@@ -22,22 +27,26 @@ const defaults = (): ProjectSettings => ({
   endDate: addDays(today(), 60),
 });
 
-async function saveToServer(settings: ProjectSettings): Promise<void> {
+function autosave(settings: ProjectSettings): void {
+  const tasks = loadTasksForAutoSave();
+  autoSaveToLocalStorage({ tasks, settings: { ...settings } });
+}
+
+function loadTasksForAutoSave(): unknown[] {
   try {
-    await mergeProjectData({ data: { settings } });
+    const raw = localStorage.getItem("gantt-tasks-v3");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    /* network error — ignore */
+    return [];
   }
 }
 
-async function loadFromServer(): Promise<ProjectSettings | null> {
-  try {
-    const data = await getProjectData();
-    if (!data) return null;
-    return (data.settings as unknown as ProjectSettings) ?? null;
-  } catch {
-    return null;
-  }
+function loadAutoSavedSettings(): ProjectSettings | null {
+  const data = loadAutoSave();
+  if (!data) return null;
+  return (data.settings as unknown as ProjectSettings) ?? null;
 }
 
 let settings: ProjectSettings = defaults();
@@ -60,22 +69,22 @@ function persist() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
   }
   listeners.forEach((l) => l());
-  saveToServer(settings);
+  autosave(settings);
+  markDirty();
 }
 
 function ensureHydrated() {
   if (!hydrated && typeof window !== "undefined") {
     settings = loadFromLocalStorage();
     hydrated = true;
-    loadFromServer().then((serverSettings) => {
-      if (serverSettings) {
-        settings = { ...defaults(), ...serverSettings };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-        listeners.forEach((l) => l());
-      } else {
-        saveToServer(settings);
-      }
-    });
+    const autoSettings = loadAutoSavedSettings();
+    if (autoSettings) {
+      settings = { ...defaults(), ...autoSettings };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      listeners.forEach((l) => l());
+    } else {
+      autosave(settings);
+    }
   }
 }
 
@@ -93,6 +102,14 @@ export function useSettings() {
 }
 
 export const settingsStore = {
+  loadProject(data: ProjectData) {
+    const loaded = data.settings as unknown as ProjectSettings;
+    settings = { ...defaults(), ...loaded };
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    }
+    listeners.forEach((l) => l());
+  },
   update(patch: Partial<ProjectSettings>) {
     settings = { ...settings, ...patch };
     if (settings.endDate < settings.startDate) settings.endDate = settings.startDate;

@@ -1,53 +1,198 @@
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
-import { createServerFn } from "@tanstack/react-start";
+import { useSyncExternalStore } from "react";
 
-const DATA_DIR = process.cwd();
-const FILE = join(DATA_DIR, "project-data.json");
-
-interface ProjectData {
+export interface ProjectData {
   tasks: unknown[];
   settings: Record<string, unknown>;
+  lastSavedAt?: string;
 }
 
-function read(): ProjectData | null {
-  if (!existsSync(FILE)) {
-    return null;
-  }
+let lastSavedAt: string | null = null;
+const lastSavedListeners = new Set<() => void>();
+
+function notifyLastSavedListeners() {
+  lastSavedListeners.forEach((l) => l());
+}
+
+export function getLastSavedAt(): string | null {
+  return lastSavedAt;
+}
+
+export function setLastSavedAt(iso: string | null) {
+  lastSavedAt = iso;
+  notifyLastSavedListeners();
+}
+
+const subscribeLastSaved = (l: () => void) => {
+  lastSavedListeners.add(l);
+  return () => lastSavedListeners.delete(l);
+};
+const getLastSavedSnapshot = () => lastSavedAt;
+const getLastSavedServerSnapshot = () => null;
+
+export function useLastSavedAt(): string | null {
+  return useSyncExternalStore(subscribeLastSaved, getLastSavedSnapshot, getLastSavedServerSnapshot);
+}
+
+export function autoSaveToLocalStorage(data: ProjectData): void {
+  if (typeof window === "undefined") return;
   try {
-    const raw = JSON.parse(readFileSync(FILE, "utf-8")) as ProjectData;
-    if (!Array.isArray(raw.tasks)) raw.tasks = [];
-    if (typeof raw.settings !== "object" || raw.settings === null) raw.settings = {};
-    return raw;
+    localStorage.setItem("gantt-project-auto", JSON.stringify(data));
+  } catch {
+    /* quota exceeded — ignore */
+  }
+}
+
+export function loadFromLocalStorage(): ProjectData | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("gantt-project-auto");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ProjectData;
+    if (!Array.isArray(parsed.tasks)) parsed.tasks = [];
+    if (typeof parsed.settings !== "object" || parsed.settings === null) parsed.settings = {};
+    return parsed;
   } catch {
     return null;
   }
 }
 
-function write(data: ProjectData): void {
-  writeFileSync(FILE, JSON.stringify(data, null, 2), "utf-8");
+export function clearLocalStorage(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("gantt-project-auto");
 }
 
-export const getProjectData = createServerFn({ method: "GET", strict: false }).handler(async () => {
-  return read();
-});
+function sanitizeFilename(name: string): string {
+  return name.replace(/[/\\:*?"<>|]/g, "-").trim() || "Proyecto";
+}
 
-export const mergeProjectData = createServerFn({ method: "POST", strict: false })
-  .validator((d: unknown) => {
-    const data = (d ?? {}) as Partial<ProjectData>;
-    return {
-      tasks: Array.isArray(data.tasks) ? data.tasks : undefined,
-      settings:
-        typeof data.settings === "object" && data.settings !== null
-          ? (data.settings as Record<string, unknown>)
-          : undefined,
+function hasFileSystemAccess(): boolean {
+  return typeof window !== "undefined" && "showOpenFilePicker" in window;
+}
+
+export async function openProjectFile(): Promise<ProjectData | null> {
+  if (hasFileSystemAccess()) {
+    try {
+      const [handle] = await (
+        window as unknown as {
+          showOpenFilePicker: (opts: unknown) => Promise<FileSystemFileHandle[]>;
+        }
+      ).showOpenFilePicker({
+        types: [
+          {
+            description: "JSON del proyecto",
+            accept: { "application/json": [".json"] },
+          },
+        ],
+        multiple: false,
+      });
+      const file = await handle.getFile();
+      const text = await file.text();
+      const parsed = JSON.parse(text) as ProjectData;
+      if (!Array.isArray(parsed.tasks)) parsed.tasks = [];
+      if (typeof parsed.settings !== "object" || parsed.settings === null) parsed.settings = {};
+      if (parsed.lastSavedAt) {
+        lastSavedAt = parsed.lastSavedAt;
+      } else {
+        lastSavedAt = null;
+      }
+      notifyLastSavedListeners();
+      autoSaveToLocalStorage(parsed);
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.style.display = "none";
+    document.body.appendChild(input);
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      document.body.removeChild(input);
+      if (!file) {
+        resolve(null);
+        return;
+      }
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text) as ProjectData;
+        if (!Array.isArray(parsed.tasks)) parsed.tasks = [];
+        if (typeof parsed.settings !== "object" || parsed.settings === null) parsed.settings = {};
+        if (parsed.lastSavedAt) {
+          lastSavedAt = parsed.lastSavedAt;
+        } else {
+          lastSavedAt = null;
+        }
+        notifyLastSavedListeners();
+        autoSaveToLocalStorage(parsed);
+        resolve(parsed);
+      } catch {
+        resolve(null);
+      }
     };
-  })
-  .handler(async ({ data }) => {
-    const existing = read() ?? { tasks: [], settings: {} };
-    write({
-      tasks: data.tasks ?? existing.tasks,
-      settings: data.settings ?? existing.settings,
-    });
-    return { ok: true };
+
+    input.oncancel = () => {
+      document.body.removeChild(input);
+      resolve(null);
+    };
+
+    input.click();
   });
+}
+
+export async function saveProjectFile(data: ProjectData, projectName: string): Promise<boolean> {
+  const now = new Date().toISOString();
+  const toSave: ProjectData = { ...data, lastSavedAt: now };
+  const suggestedName = `Gantt-${sanitizeFilename(projectName)}.json`;
+  const json = JSON.stringify(toSave, null, 2);
+
+  if (hasFileSystemAccess()) {
+    try {
+      const handle = await (
+        window as unknown as {
+          showSaveFilePicker: (opts: unknown) => Promise<FileSystemFileHandle>;
+        }
+      ).showSaveFilePicker({
+        suggestedName,
+        types: [
+          {
+            description: "JSON del proyecto",
+            accept: { "application/json": [".json"] },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+      lastSavedAt = now;
+      notifyLastSavedListeners();
+      autoSaveToLocalStorage(toSave);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = suggestedName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  lastSavedAt = now;
+  notifyLastSavedListeners();
+  autoSaveToLocalStorage(toSave);
+  return true;
+}
+
+export function clearFileState(): void {
+  lastSavedAt = null;
+  notifyLastSavedListeners();
+}

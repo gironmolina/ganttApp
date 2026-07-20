@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../json-persist", () => ({
-  getProjectData: vi.fn().mockResolvedValue(null),
-  mergeProjectData: vi.fn().mockResolvedValue({ ok: true }),
+  autoSaveToLocalStorage: vi.fn(),
+  loadFromLocalStorage: vi.fn().mockReturnValue(null),
+  clearLocalStorage: vi.fn(),
+  openProjectFile: vi.fn(),
+  saveProjectFile: vi.fn(),
 }));
 
 import { settingsStore } from "../settings-store";

@@ -1,5 +1,10 @@
 import { useSyncExternalStore } from "react";
-import { getProjectData, mergeProjectData } from "./json-persist";
+import {
+  autoSaveToLocalStorage,
+  loadFromLocalStorage as loadAutoSave,
+  type ProjectData,
+} from "./json-persist";
+import { markDirty } from "./dirty-store";
 
 export type BlockType = "partial" | "total";
 
@@ -140,22 +145,25 @@ function seed(): Task[] {
   ];
 }
 
-async function saveToServer(tasks: Task[]): Promise<void> {
+function autosave(tasks: Task[]): void {
+  const settings = typeof window !== "undefined" ? loadSettingsForAutoSave() : {};
+  autoSaveToLocalStorage({ tasks, settings });
+}
+
+function loadSettingsForAutoSave(): Record<string, unknown> {
   try {
-    await mergeProjectData({ data: { tasks } });
+    const raw = localStorage.getItem("gantt-settings-v1");
+    if (!raw) return {};
+    return JSON.parse(raw);
   } catch {
-    /* network error — ignore */
+    return {};
   }
 }
 
-async function loadFromServer(): Promise<Task[] | null> {
-  try {
-    const data = await getProjectData();
-    if (!data) return null;
-    return Array.isArray(data.tasks) ? (data.tasks as Task[]) : null;
-  } catch {
-    return null;
-  }
+function loadAutoSavedProject(): Task[] | null {
+  const data = loadAutoSave();
+  if (!data) return null;
+  return Array.isArray(data.tasks) ? (data.tasks as Task[]) : null;
 }
 
 function ensurePositions(taskList: Task[]): Task[] {
@@ -245,22 +253,22 @@ function persist() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }
   listeners.forEach((l) => l());
-  saveToServer(tasks);
+  autosave(tasks);
+  markDirty();
 }
 
 function ensureHydrated() {
   if (!hydrated && typeof window !== "undefined") {
     tasks = loadFromLocalStorage();
     hydrated = true;
-    loadFromServer().then((serverTasks) => {
-      if (serverTasks !== null) {
-        tasks = migrateTasks(serverTasks);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-        listeners.forEach((l) => l());
-      } else {
-        saveToServer(tasks);
-      }
-    });
+    const autoTasks = loadAutoSavedProject();
+    if (autoTasks !== null) {
+      tasks = migrateTasks(autoTasks);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      listeners.forEach((l) => l());
+    } else {
+      autosave(tasks);
+    }
   }
 }
 
@@ -287,6 +295,14 @@ export function _resetForTesting() {
 }
 
 export const store = {
+  loadProject(data: ProjectData) {
+    const loaded = Array.isArray(data.tasks) ? migrateTasks(data.tasks as Task[]) : [];
+    tasks = ensurePositions(loaded);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+    listeners.forEach((l) => l());
+  },
   add(partial: Partial<Task> & { title: string }) {
     const t = today();
     const siblings = tasks.filter((x) => x.parentId === (partial.parentId ?? null));

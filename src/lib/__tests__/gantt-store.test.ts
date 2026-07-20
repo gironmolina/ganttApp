@@ -2,8 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { store, getTasks, _resetForTesting, type Task } from "../gantt-store";
 
 vi.mock("../json-persist", () => ({
-  getProjectData: vi.fn().mockResolvedValue(null),
-  mergeProjectData: vi.fn().mockResolvedValue({ ok: true }),
+  autoSaveToLocalStorage: vi.fn(),
+  loadFromLocalStorage: vi.fn().mockReturnValue(null),
+  clearLocalStorage: vi.fn(),
+  openProjectFile: vi.fn(),
+  saveProjectFile: vi.fn(),
 }));
 
 describe("gantt-store", () => {

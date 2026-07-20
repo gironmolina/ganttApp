@@ -1,7 +1,13 @@
 import { type Task, store as ganttStore, todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
 import { setHoveredTask } from "@/lib/hover-sync";
-import { computeTimeProgress, parseDate, fmtShort, countWorkdays, toLocalIso } from "@/lib/gantt-utils";
+import {
+  computeTimeProgress,
+  parseDate,
+  fmtShort,
+  countWorkdays,
+  toLocalIso,
+} from "@/lib/gantt-utils";
 import {
   CheckCircle2,
   AlertOctagon,
