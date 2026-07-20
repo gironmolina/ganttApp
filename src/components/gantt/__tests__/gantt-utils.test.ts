@@ -21,6 +21,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     position: 0,
     title: "Test",
     assignee: "",
+    priority: "none",
     initialStartDate: "2026-05-01",
     initialEndDate: "2026-05-15",
     progress: 0,

@@ -7,6 +7,7 @@ import {
 import { markDirty } from "./dirty-store";
 
 export type BlockType = "partial" | "total";
+export type Priority = "high" | "medium" | "low" | "none";
 
 export interface BlockRange {
   id: string;
@@ -29,6 +30,7 @@ export interface Task {
   position: number;
   title: string;
   assignee: string;
+  priority: Priority;
   initialStartDate?: string;
   initialEndDate?: string;
   estimatedStartDate?: string;
@@ -41,7 +43,7 @@ export interface Task {
   createdAt: string;
 }
 
-const STORAGE_KEY = "gantt-tasks-v3";
+const STORAGE_KEY = "gantt-tasks-v4";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -125,6 +127,10 @@ function migrateTasks(taskList: any[]): Task[] {
       migrated.blocks = [];
     }
 
+    if (!migrated.priority) {
+      migrated.priority = "none";
+    }
+
     return migrated as Task;
   });
 }
@@ -132,8 +138,10 @@ function migrateTasks(taskList: any[]): Task[] {
 function loadFromLocalStorage(): Task[] {
   if (typeof window === "undefined") return [];
   try {
-    // Try v3 first
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      raw = localStorage.getItem("gantt-tasks-v3");
+    }
     if (!raw) {
       return [];
     }
@@ -213,6 +221,7 @@ export const store = {
       position: maxPos + 1,
       title: partial.title,
       assignee: partial.assignee ?? "",
+      priority: partial.priority ?? "none",
       initialStartDate: partial.initialStartDate || undefined,
       initialEndDate:
         partial.initialEndDate &&

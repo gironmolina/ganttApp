@@ -18,6 +18,7 @@ import {
   MessageSquare,
   GripVertical,
   Columns3,
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -479,6 +480,16 @@ function SortableRow({
         <span className="shrink-0 text-[10px] text-muted-foreground">{number}</span>
         <StatusIcon task={task} />
         <EditableTitle task={task} />
+        {task.priority !== "none" && (
+          <Flag
+            className={cn(
+              "h-3 w-3 shrink-0",
+              task.priority === "high" && "text-red-500",
+              task.priority === "medium" && "text-yellow-500",
+              task.priority === "low" && "text-green-500",
+            )}
+          />
+        )}
         {task.comments.length > 0 && (
           <span className="inline-flex items-center gap-0.5 text-[9px] text-muted-foreground">
             <MessageSquare className="h-2.5 w-2.5" /> {task.comments.length}

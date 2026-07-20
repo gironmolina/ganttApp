@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { store, type Task, type BlockRange } from "@/lib/gantt-store";
+import { store, type Task, type BlockRange, type Priority } from "@/lib/gantt-store";
 import { countWorkdays } from "@/lib/gantt-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +107,44 @@ export function TaskDetail({
           onChange={(e) => store.update(task.id, { assignee: e.target.value })}
           placeholder="Nombre del responsable"
         />
+      </div>
+
+      <div>
+        <Label className="text-[10px]">Prioridad</Label>
+        <Select
+          value={task.priority}
+          onValueChange={(v) => store.update(task.id, { priority: v as Priority })}
+        >
+          <SelectTrigger className="h-7 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="high">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+                Alta
+              </span>
+            </SelectItem>
+            <SelectItem value="medium">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-yellow-500" />
+                Media
+              </span>
+            </SelectItem>
+            <SelectItem value="low">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                Baja
+              </span>
+            </SelectItem>
+            <SelectItem value="none">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-gray-300" />
+                Ninguna
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>
