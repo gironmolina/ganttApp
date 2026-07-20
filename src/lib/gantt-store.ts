@@ -46,104 +46,6 @@ const STORAGE_KEY = "gantt-tasks-v3";
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 const today = () => new Date().toISOString().slice(0, 10);
-const addDays = (d: string, n: number) => {
-  const dt = new Date(d);
-  dt.setDate(dt.getDate() + n);
-  return dt.toISOString().slice(0, 10);
-};
-
-function seed(): Task[] {
-  const t = today();
-  const p1 = uid();
-  const p2 = uid();
-  return [
-    {
-      id: p1,
-      parentId: null,
-      position: 0,
-      title: "Planificación del proyecto",
-      assignee: "Ana Torres",
-      initialStartDate: t,
-      initialEndDate: addDays(t, 6),
-      estimatedStartDate: t,
-      estimatedEndDate: addDays(t, 6),
-      progress: 60,
-      blocks: [],
-      comments: [],
-      createdAt: t,
-    },
-    {
-      id: uid(),
-      parentId: p1,
-      position: 0,
-      title: "Definir alcance",
-      assignee: "Ana Torres",
-      initialStartDate: t,
-      initialEndDate: addDays(t, 2),
-      estimatedStartDate: t,
-      estimatedEndDate: addDays(t, 2),
-      progress: 100,
-      blocks: [],
-      comments: [],
-      createdAt: t,
-    },
-    {
-      id: uid(),
-      parentId: p1,
-      position: 1,
-      title: "Kick-off con stakeholders",
-      assignee: "Luis Pérez",
-      initialStartDate: addDays(t, 3),
-      initialEndDate: addDays(t, 5),
-      estimatedStartDate: addDays(t, 4),
-      estimatedEndDate: addDays(t, 7),
-      actualStartDate: addDays(t, 4),
-      actualEndDate: addDays(t, 7),
-      progress: 40,
-      blocks: [
-        {
-          id: uid(),
-          type: "partial",
-          reason: "Esperando disponibilidad de cliente",
-          startDate: addDays(t, 4),
-          endDate: addDays(t, 5),
-        },
-      ],
-      comments: [],
-      createdAt: t,
-    },
-    {
-      id: p2,
-      parentId: null,
-      position: 1,
-      title: "Desarrollo MVP",
-      assignee: "Equipo Dev",
-      initialStartDate: addDays(t, 7),
-      initialEndDate: addDays(t, 21),
-      estimatedStartDate: addDays(t, 7),
-      estimatedEndDate: addDays(t, 21),
-      progress: 10,
-      blocks: [],
-      comments: [],
-      createdAt: t,
-    },
-    {
-      id: uid(),
-      parentId: p2,
-      position: 0,
-      title: "Diseño UI",
-      assignee: "María Gómez",
-      initialStartDate: addDays(t, 7),
-      initialEndDate: addDays(t, 12),
-      estimatedStartDate: addDays(t, 7),
-      estimatedEndDate: addDays(t, 12),
-      progress: 30,
-      blocks: [],
-      comments: [],
-      createdAt: t,
-    },
-  ];
-}
 
 function autosave(tasks: Task[]): void {
   const settings = typeof window !== "undefined" ? loadSettingsForAutoSave() : {};
@@ -233,9 +135,7 @@ function loadFromLocalStorage(): Task[] {
     // Try v3 first
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const s = seed();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-      return s;
+      return [];
     }
     return ensurePositions(migrateTasks(JSON.parse(raw)));
   } catch {

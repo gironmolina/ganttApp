@@ -5,10 +5,11 @@ import {
   saveProjectFile,
   clearLocalStorage,
   clearFileState,
+  checkFileConflict,
   useLastSavedAt,
 } from "@/lib/json-persist";
 import { useIsDirty, markClean } from "@/lib/dirty-store";
-import { FolderOpen, Save, FilePlus } from "lucide-react";
+import { FolderOpen, FilePlus, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function formatLastSaved(iso: string): string {
@@ -37,15 +38,6 @@ export function GlobalToolbar() {
     markClean();
   };
 
-  const handleSave = async () => {
-    const tasks = getTasks();
-    const settingsRaw = localStorage.getItem("gantt-settings-v1");
-    const settings = settingsRaw ? JSON.parse(settingsRaw) : {};
-    const projectName = settings.name || "Proyecto";
-    const ok = await saveProjectFile({ tasks, settings }, projectName);
-    if (ok) markClean();
-  };
-
   const handleNew = () => {
     if (!confirm("¿Crear un proyecto nuevo? Se perderán los cambios no guardados.")) return;
     clearLocalStorage();
@@ -55,6 +47,23 @@ export function GlobalToolbar() {
     store.loadProject({ tasks: [], settings: {} });
     settingsStore.loadProject({ tasks: [], settings: {} });
     markClean();
+  };
+
+  const handleSave = async () => {
+    const conflict = await checkFileConflict();
+    if (conflict) {
+      const ok = confirm(
+        "Este archivo fue modificado por otra persona desde que lo abriste. " +
+          "Podés guardar con otro nombre para no sobreescribir.",
+      );
+      if (!ok) return;
+    }
+    const tasks = getTasks();
+    const settingsRaw = localStorage.getItem("gantt-settings-v1");
+    const settings = settingsRaw ? JSON.parse(settingsRaw) : {};
+    const projectName = settings.name || "Proyecto";
+    const ok = await saveProjectFile({ tasks, settings }, projectName);
+    if (ok) markClean();
   };
 
   return (
@@ -70,6 +79,15 @@ export function GlobalToolbar() {
       </Button>
       <Button
         size="sm"
+        variant="ghost"
+        className="h-6 gap-1 px-1.5 text-[10px]"
+        onClick={handleNew}
+      >
+        <FilePlus className="h-3 w-3" />
+        Nuevo
+      </Button>
+      <Button
+        size="sm"
         variant={dirty ? "default" : "ghost"}
         className="h-6 gap-1 px-1.5 text-[10px]"
         onClick={handleSave}
@@ -77,15 +95,6 @@ export function GlobalToolbar() {
         <Save className="h-3 w-3" />
         Guardar
         {dirty && <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />}
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-6 gap-1 px-1.5 text-[10px]"
-        onClick={handleNew}
-      >
-        <FilePlus className="h-3 w-3" />
-        Nuevo
       </Button>
       <span className="text-[10px] text-muted-foreground">
         {dirty ? (
