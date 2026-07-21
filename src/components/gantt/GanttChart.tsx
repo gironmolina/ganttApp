@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Task } from "@/lib/gantt-store";
 import { todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,8 @@ export function GanttChart({
   onScrollSync?: () => void;
   layerVisibility: Record<LayerKey, boolean>;
 }) {
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const hasHighlight = hoveredId !== null;
   const { workdays, dateToIndex, weekStarts, projectEndIdx } = useMemo(
     () => buildTimeline(tasks, projectStart, projectEnd),
     [tasks, projectStart, projectEnd],
@@ -71,7 +73,7 @@ export function GanttChart({
   // Flechas de dependencia: para cada tarea con predecesores visibles, un
   // trazado ortogonal del predecesor al sucesor según el tipo (FS/FF/SS/SF).
   const arrows = useMemo(() => {
-    const list: { id: string; d: string }[] = [];
+    const list: { id: string; d: string; predId: string; succId: string }[] = [];
     const yOf = (rowIdx: number) => rowIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
     for (const task of order) {
       const succ = barPos.get(task.id);
@@ -120,7 +122,7 @@ export function GanttChart({
           const midX = x2 >= x1 ? x2 - 8 : x1 + 8;
           d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
         }
-        list.push({ id: dep.id, d });
+        list.push({ id: dep.id, d, predId: dep.predecessorId, succId: task.id });
       }
     }
     return list;
@@ -365,8 +367,14 @@ export function GanttChart({
                   selectedId === task.id && "bg-primary/15 border-l-2 border-l-primary",
                 )}
                 style={{ height: ROW_HEIGHT }}
-                onMouseEnter={() => setHoveredTask(task.id)}
-                onMouseLeave={() => setHoveredTask(null)}
+                onMouseEnter={() => {
+                  setHoveredTask(task.id);
+                  setHoveredId(task.id);
+                }}
+                onMouseLeave={() => {
+                  setHoveredTask(null);
+                  setHoveredId(null);
+                }}
               >
                 {/* day grid */}
                 <div className="pointer-events-none absolute inset-0 flex">
@@ -578,7 +586,7 @@ export function GanttChart({
               className="pointer-events-none absolute left-0 top-0"
               width={totalWidth}
               height={totalRowsHeight}
-              style={{ zIndex: 10 }}
+              style={{ zIndex: hasHighlight ? 39 : 10 }}
             >
               <defs>
                 <marker
@@ -589,16 +597,17 @@ export function GanttChart({
                   refY="3"
                   orient="auto"
                 >
-                  <polygon points="0,0 6,3 0,6" fill="var(--muted-foreground)" />
+                  <polygon points="0,0 6,3 0,6" fill="context-stroke" />
                 </marker>
               </defs>
               {arrows.map((a) => {
+                const highlight = hoveredId === a.predId || hoveredId === a.succId;
                 return (
                   <path
                     key={a.id}
                     d={a.d}
                     fill="none"
-                    stroke="var(--muted-foreground)"
+                    stroke={highlight ? "var(--status-complete)" : "var(--muted-foreground)"}
                     strokeWidth="1.5"
                     strokeOpacity="0.7"
                     markerEnd="url(#dep-arrowhead)"
