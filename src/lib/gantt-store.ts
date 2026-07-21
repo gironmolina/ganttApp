@@ -5,6 +5,7 @@ import {
   type ProjectData,
 } from "./json-persist";
 import { markDirty } from "./dirty-store";
+import { effectiveStart } from "./critical-path";
 
 export type BlockType = "partial" | "total";
 export type Priority = "high" | "medium" | "low" | "none";
@@ -421,6 +422,36 @@ export const store = {
     siblings.splice(toIndex, 0, moved);
     const updated = new Map(siblings.map((s, i) => [s.id, i]));
     tasks = tasks.map((t) => (updated.has(t.id) ? { ...t, position: updated.get(t.id)! } : t));
+    persist();
+  },
+  /**
+   * Ordena las tareas por fecha de inicio ascendente (real → estimada →
+   * inicial), respetando la jerarquía: cada grupo de hermanos (mismo
+   * parentId) se reordena de forma independiente. Las tareas sin ninguna
+   * fecha van al final, manteniendo su orden relativo actual.
+   */
+  sortByDate() {
+    const byParent = new Map<string | null, Task[]>();
+    for (const t of tasks) {
+      const arr = byParent.get(t.parentId) ?? [];
+      arr.push(t);
+      byParent.set(t.parentId, arr);
+    }
+    const positionMap = new Map<string, number>();
+    for (const arr of byParent.values()) {
+      const base = [...arr].sort((a, b) => a.position - b.position);
+      const sorted = base
+        .map((t) => ({ t, d: effectiveStart(t) }))
+        .sort((a, b) => {
+          if (a.d && b.d) return a.d < b.d ? -1 : a.d > b.d ? 1 : 0;
+          if (a.d) return -1;
+          if (b.d) return 1;
+          return 0;
+        })
+        .map((x) => x.t);
+      sorted.forEach((t, i) => positionMap.set(t.id, i));
+    }
+    tasks = tasks.map((t) => ({ ...t, position: positionMap.get(t.id) ?? t.position }));
     persist();
   },
 };

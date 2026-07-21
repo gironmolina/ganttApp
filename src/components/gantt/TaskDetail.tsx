@@ -8,7 +8,12 @@ import {
   type DependencyType,
 } from "@/lib/gantt-store";
 import { countWorkdays } from "@/lib/gantt-utils";
-import { validateDependency, type ScheduleInfo } from "@/lib/critical-path";
+import {
+  validateDependency,
+  isDependencyDateValid,
+  findDependenciesBrokenByEdit,
+  type BrokenDependency,
+} from "@/lib/critical-path";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +29,16 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ChevronRight,
   ChevronDown,
   Trash2,
@@ -35,22 +50,46 @@ import {
 export function TaskDetail({
   task,
   allTasks,
+  numbers,
   onClose,
   onAddSubtask,
   projectStartDate,
-  schedule,
 }: {
   task: Task;
   allTasks: Task[];
+  numbers?: Record<string, string>;
   onClose: () => void;
   onAddSubtask: (parentId: string) => void;
   projectStartDate?: string;
-  schedule?: Map<string, ScheduleInfo>;
 }) {
   const [commentAuthor, setCommentAuthor] = useState("");
   const [commentText, setCommentText] = useState("");
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [newDepType, setNewDepType] = useState<DependencyType>("FS");
+  const [isAddingDependency, setIsAddingDependency] = useState(false);
+  const addDependencyFormRef = useRef<HTMLDivElement>(null);
+  const [pendingDateChange, setPendingDateChange] = useState<{
+    patch: Partial<Task>;
+    broken: BrokenDependency[];
+  } | null>(null);
   const parent = allTasks.find((t) => t.id === task.parentId);
+
+  // Cierra el formulario de "añadir dependencia" al hacer click fuera de él.
+  // Si el click además cae fuera del sidebar, el listener de GanttPage se
+  // encarga de cerrar todo el panel; si cae dentro del sidebar, solo se
+  // colapsa este formulario y el panel sigue abierto.
+  useEffect(() => {
+    if (!isAddingDependency) return;
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (addDependencyFormRef.current?.contains(target)) return;
+      if (target.closest("[data-radix-popper-content-wrapper]")) return;
+      setIsAddingDependency(false);
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [isAddingDependency]);
 
   const toggleSection = (id: string) => {
     setCollapsedSections((prev) => {
@@ -62,6 +101,18 @@ export function TaskDetail({
   };
 
   const isCollapsed = (id: string) => collapsedSections.has(id);
+
+  // Cualquier edición de fecha pasa por aquí: si rompe una dependencia ya
+  // creada (deja de cumplir la regla de su tipo), pide confirmación antes de
+  // aplicar el cambio y eliminar esa dependencia.
+  const commitDateChange = (patch: Partial<Task>) => {
+    const broken = findDependenciesBrokenByEdit(allTasks, task.id, patch);
+    if (broken.length === 0) {
+      store.update(task.id, patch);
+      return;
+    }
+    setPendingDateChange({ patch, broken });
+  };
 
   return (
     <div className="flex h-full flex-col gap-2 overflow-y-auto p-3">
@@ -214,7 +265,7 @@ export function TaskDetail({
                     variant="ghost"
                     className="h-4 px-1 text-[9px]"
                     onClick={() =>
-                      store.update(task.id, {
+                      commitDateChange({
                         initialStartDate: undefined,
                         initialEndDate: undefined,
                       })
@@ -238,7 +289,7 @@ export function TaskDetail({
                       if (v && task.initialEndDate && task.initialEndDate < v) {
                         patch.initialEndDate = undefined;
                       }
-                      store.update(task.id, patch);
+                      commitDateChange(patch);
                     }}
                   />
                 </div>
@@ -249,7 +300,7 @@ export function TaskDetail({
                       value={task.initialEndDate ?? ""}
                       min={task.initialStartDate}
                       focusMonth={task.initialStartDate}
-                      onChange={(v) => store.update(task.id, { initialEndDate: v || undefined })}
+                      onChange={(v) => commitDateChange({ initialEndDate: v || undefined })}
                     />
                   ) : (
                     <Button
@@ -286,7 +337,7 @@ export function TaskDetail({
                     variant="ghost"
                     className="h-4 px-1 text-[9px]"
                     onClick={() =>
-                      store.update(task.id, {
+                      commitDateChange({
                         estimatedStartDate: undefined,
                         estimatedEndDate: undefined,
                       })
@@ -317,7 +368,7 @@ export function TaskDetail({
                         if (v && task.estimatedEndDate && task.estimatedEndDate < v) {
                           patch.estimatedEndDate = undefined;
                         }
-                        store.update(task.id, patch);
+                        commitDateChange(patch);
                       }}
                     />
                   </div>
@@ -328,9 +379,7 @@ export function TaskDetail({
                         value={task.estimatedEndDate ?? ""}
                         min={task.estimatedStartDate}
                         focusMonth={task.estimatedStartDate}
-                        onChange={(v) =>
-                          store.update(task.id, { estimatedEndDate: v || undefined })
-                        }
+                        onChange={(v) => commitDateChange({ estimatedEndDate: v || undefined })}
                       />
                     ) : (
                       <Button
@@ -366,7 +415,7 @@ export function TaskDetail({
                     variant="ghost"
                     className="h-4 px-1 text-[9px]"
                     onClick={() =>
-                      store.update(task.id, {
+                      commitDateChange({
                         actualStartDate: undefined,
                         actualEndDate: undefined,
                       })
@@ -396,7 +445,7 @@ export function TaskDetail({
                         if (v && task.actualEndDate && task.actualEndDate < v) {
                           patch.actualEndDate = undefined;
                         }
-                        store.update(task.id, patch);
+                        commitDateChange(patch);
                       }}
                     />
                   </div>
@@ -407,7 +456,7 @@ export function TaskDetail({
                         value={task.actualEndDate ?? ""}
                         min={task.actualStartDate}
                         focusMonth={task.actualStartDate}
-                        onChange={(v) => store.update(task.id, { actualEndDate: v || undefined })}
+                        onChange={(v) => commitDateChange({ actualEndDate: v || undefined })}
                       />
                     ) : (
                       <Button
@@ -450,59 +499,89 @@ export function TaskDetail({
           <Badge variant="secondary" className="ml-1 h-3.5 px-1 text-[8px]">
             {task.dependencies.length}
           </Badge>
+          {!isCollapsed("dependencias") && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-auto h-5 px-1.5 text-[9px]"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsAddingDependency(true);
+              }}
+            >
+              <Plus className="mr-0.5 h-2.5 w-2.5" /> Añadir
+            </Button>
+          )}
         </button>
         {!isCollapsed("dependencias") && (
           <div className="space-y-1.5 px-2 pb-2">
-            {(() => {
-              const info = schedule?.get(task.id);
-              if (!info) return null;
-              return (
-                <div className="flex items-center gap-1.5 text-[10px]">
-                  <span className="text-muted-foreground">
-                    Holgura: <span className="font-medium text-foreground">{info.totalFloat}</span>{" "}
-                    {info.totalFloat === 1 ? "día hábil" : "días hábiles"}
-                  </span>
-                  {info.critical && (
-                    <Badge
-                      className="h-3.5 border-0 px-1 text-[8px] text-white"
-                      style={{ backgroundColor: "var(--status-blocked)" }}
+            {isAddingDependency &&
+              (() => {
+                const candidates = allTasks.filter(
+                  (t) =>
+                    t.id !== task.id &&
+                    !task.dependencies.some((d) => d.predecessorId === t.id) &&
+                    isDependencyDateValid(t, task, newDepType),
+                );
+                return (
+                  <div
+                    ref={addDependencyFormRef}
+                    className="flex items-center gap-1.5 rounded border bg-muted/30 p-1.5"
+                  >
+                    <Select
+                      value={newDepType}
+                      onValueChange={(v) => setNewDepType(v as DependencyType)}
                     >
-                      Ruta crítica
-                    </Badge>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* Añadir predecesor */}
-            <Select
-              value=""
-              onValueChange={(predId) => {
-                const res = validateDependency(allTasks, task.id, predId);
-                if (!res.ok) {
-                  toast.error(res.reason);
-                  return;
-                }
-                store.addDependency(task.id, predId, "FS");
-              }}
-            >
-              <SelectTrigger className="h-7 text-[10px]">
-                <SelectValue placeholder="+ Añadir tarea predecesora..." />
-              </SelectTrigger>
-              <SelectContent>
-                {allTasks
-                  .filter(
-                    (t) =>
-                      t.id !== task.id &&
-                      !task.dependencies.some((d) => d.predecessorId === t.id),
-                  )
-                  .map((t) => (
-                    <SelectItem key={t.id} value={t.id} className="text-[10px]">
-                      {t.title}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+                      <SelectTrigger className="h-7 w-[128px] shrink-0 text-[10px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FS" className="text-[10px]">
+                          FS · Fin → Inicio
+                        </SelectItem>
+                        <SelectItem value="FF" className="text-[10px]">
+                          FF · Fin → Fin
+                        </SelectItem>
+                        <SelectItem value="SS" className="text-[10px]">
+                          SS · Inicio → Inicio
+                        </SelectItem>
+                        <SelectItem value="SF" className="text-[10px]">
+                          SF · Inicio → Fin
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {candidates.length === 0 ? (
+                      <p className="flex-1 text-[10px] text-muted-foreground">
+                        No hay tareas que apliquen.
+                      </p>
+                    ) : (
+                      <Select
+                        value=""
+                        onValueChange={(predId) => {
+                          const res = validateDependency(allTasks, task.id, predId, newDepType);
+                          if (!res.ok) {
+                            toast.error(res.reason);
+                            return;
+                          }
+                          store.addDependency(task.id, predId, newDepType);
+                          setIsAddingDependency(false);
+                        }}
+                      >
+                        <SelectTrigger className="h-7 flex-1 text-[10px]">
+                          <SelectValue placeholder="Elegir tarea predecesora..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {candidates.map((t) => (
+                            <SelectItem key={t.id} value={t.id} className="text-[10px]">
+                              {numbers?.[t.id] ? `${numbers[t.id]} · ${t.title}` : t.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                );
+              })()}
 
             {task.dependencies.length === 0 && (
               <p className="text-[10px] text-muted-foreground">Sin dependencias.</p>
@@ -772,6 +851,50 @@ export function TaskDetail({
           </div>
         )}
       </div>
+
+      <AlertDialog
+        open={!!pendingDateChange}
+        onOpenChange={(open) => !open && setPendingDateChange(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Esto eliminará {pendingDateChange?.broken.length ?? 0}{" "}
+              {(pendingDateChange?.broken.length ?? 0) === 1 ? "dependencia" : "dependencias"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Este cambio de fecha hace que las siguientes dependencias dejen de cumplir su regla.
+              Si continúas, se eliminarán:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <ul className="space-y-1 text-xs">
+            {pendingDateChange?.broken.map((b) => (
+              <li key={b.dependencyId} className="rounded border bg-muted/30 px-2 py-1">
+                <span className="font-medium">{b.predecessorTitle}</span> →{" "}
+                <span className="font-medium">{b.successorTitle}</span>{" "}
+                <span className="text-muted-foreground">({b.type})</span>
+              </li>
+            ))}
+          </ul>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingDateChange(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingDateChange) return;
+                store.update(task.id, pendingDateChange.patch);
+                for (const b of pendingDateChange.broken) {
+                  store.removeDependency(b.successorId, b.dependencyId);
+                }
+                setPendingDateChange(null);
+              }}
+            >
+              Confirmar y eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

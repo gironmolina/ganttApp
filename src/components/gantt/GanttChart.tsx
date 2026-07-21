@@ -4,7 +4,6 @@ import { todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
 import { setHoveredTask } from "@/lib/hover-sync";
 import type { LayerKey } from "@/lib/layer-visibility";
-import type { ScheduleInfo } from "@/lib/critical-path";
 import {
   COL_WIDTH,
   ROW_HEIGHT,
@@ -26,7 +25,6 @@ export function GanttChart({
   scrollRef,
   onScrollSync,
   layerVisibility,
-  schedule,
 }: {
   tasks: Task[];
   order: Task[];
@@ -37,7 +35,6 @@ export function GanttChart({
   scrollRef?: React.Ref<HTMLDivElement>;
   onScrollSync?: () => void;
   layerVisibility: Record<LayerKey, boolean>;
-  schedule?: Map<string, ScheduleInfo>;
 }) {
   const { workdays, dateToIndex, weekStarts, projectEndIdx } = useMemo(
     () => buildTimeline(tasks, projectStart, projectEnd),
@@ -386,22 +383,6 @@ export function GanttChart({
                   ))}
                 </div>
 
-                {/* Holgura (slack): barra fantasma tras la barra base */}
-                {layerVisibility.criticalPath &&
-                  barUnionWidth > 0 &&
-                  (schedule?.get(task.id)?.totalFloat ?? 0) > 0 && (
-                    <div
-                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded-sm bg-[var(--status-progress)]/20"
-                      title={`Holgura: ${schedule!.get(task.id)!.totalFloat} días hábiles`}
-                      style={{
-                        left: barUnionRight,
-                        width: schedule!.get(task.id)!.totalFloat * COL_WIDTH,
-                        height: 10,
-                        zIndex: 0,
-                      }}
-                    />
-                  )}
-
                 {/* Clickable area covering all drawn bar segments — zIndex 0 */}
                 {barUnionWidth > 0 && (
                   <button
@@ -412,16 +393,6 @@ export function GanttChart({
                     style={{ left: barUnionLeft, width: barUnionWidth, height: 22, zIndex: 0 }}
                   />
                 )}
-
-                {/* Resaltado de ruta crítica: contorno rojo sobre la barra base */}
-                {layerVisibility.criticalPath &&
-                  barUnionWidth > 0 &&
-                  schedule?.get(task.id)?.critical && (
-                    <div
-                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded ring-2 ring-[var(--status-blocked)]"
-                      style={{ left: barUnionLeft, width: barUnionWidth, height: 24, zIndex: 7 }}
-                    />
-                  )}
 
                 {/* Actual bar — zIndex 1 */}
                 {layerVisibility.onTrack && hasActual && (

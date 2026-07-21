@@ -43,11 +43,7 @@ function isAncestorOf(byId: Map<string, Task>, ancestorId: string, id: string): 
  * aristas predecesor→sucesor? Una tarea S con dependency {predecessorId: P}
  * significa arista P -> S (P debe ir antes que S).
  */
-function reachable(
-  successorsOf: Map<string, string[]>,
-  from: string,
-  target: string,
-): boolean {
+function reachable(successorsOf: Map<string, string[]>, from: string, target: string): boolean {
   if (from === target) return true;
   const seen = new Set<string>();
   const stack = [from];
@@ -74,15 +70,64 @@ function buildSuccessorsMap(tasks: Task[]): Map<string, string[]> {
   return map;
 }
 
+/** Fecha de inicio efectiva: real → estimada → inicial. */
+export function effectiveStart(task: Task): string | undefined {
+  return task.actualStartDate || task.estimatedStartDate || task.initialStartDate;
+}
+
+/** Fecha de fin efectiva: real → estimada → inicial. */
+function effectiveEnd(task: Task): string | undefined {
+  return task.actualEndDate || task.estimatedEndDate || task.initialEndDate;
+}
+
+/**
+ * ¿Las fechas efectivas de `pred` y `succ` cumplen la restricción del tipo de
+ * dependencia dado? Permisivo si falta alguna de las fechas relevantes (no hay
+ * suficiente información para contradecir la regla).
+ */
+export function isDependencyDateValid(pred: Task, succ: Task, type: DependencyType): boolean {
+  switch (type) {
+    case "FS": {
+      const a = effectiveEnd(pred);
+      const b = effectiveStart(succ);
+      return !a || !b || a <= b;
+    }
+    case "FF": {
+      const a = effectiveEnd(pred);
+      const b = effectiveEnd(succ);
+      return !a || !b || a <= b;
+    }
+    case "SS": {
+      const a = effectiveStart(pred);
+      const b = effectiveStart(succ);
+      return !a || !b || a <= b;
+    }
+    case "SF": {
+      const a = effectiveStart(pred);
+      const b = effectiveEnd(succ);
+      return !a || !b || a <= b;
+    }
+  }
+}
+
+const DEPENDENCY_DATE_RULE_LABEL: Record<DependencyType, string> = {
+  FS: "debe terminar antes de que empiece esta tarea (Fin → Inicio)",
+  FF: "debe terminar antes o al mismo tiempo que esta tarea (Fin → Fin)",
+  SS: "debe empezar antes o al mismo tiempo que esta tarea (Inicio → Inicio)",
+  SF: "debe empezar antes de que termine esta tarea (Inicio → Fin)",
+};
+
 /**
  * Valida si se puede crear una dependencia donde `successorId` pasa a depender
  * de `predecessorId` con el tipo dado. Rechaza: auto-referencia, duplicada,
- * padre-hijo/ancestro-descendiente, cíclica y redundante.
+ * padre-hijo/ancestro-descendiente, cíclica, redundante y fechas incompatibles
+ * con el tipo (FS/FF/SS/SF).
  */
 export function validateDependency(
   tasks: Task[],
   successorId: string,
   predecessorId: string,
+  type: DependencyType,
 ): ValidationResult {
   const byId = new Map(tasks.map((t) => [t.id, t]));
   const successor = byId.get(successorId);
@@ -126,7 +171,67 @@ export function validateDependency(
     return { ok: false, reason: "Esa dependencia es redundante (ya existe una ruta indirecta)." };
   }
 
+  // Fechas incompatibles con el tipo de dependencia
+  if (!isDependencyDateValid(predecessor, successor, type)) {
+    return {
+      ok: false,
+      reason: `"${predecessor.title}" ${DEPENDENCY_DATE_RULE_LABEL[type]}.`,
+    };
+  }
+
   return { ok: true };
+}
+
+export interface BrokenDependency {
+  dependencyId: string;
+  type: DependencyType;
+  successorId: string;
+  successorTitle: string;
+  predecessorId: string;
+  predecessorTitle: string;
+}
+
+/**
+ * Dado un cambio de fechas (`patch`) sobre la tarea `editedTaskId`, devuelve las
+ * dependencias del proyecto que eran válidas antes del cambio y dejarían de
+ * serlo después (ya sea porque `editedTaskId` es el predecesor o el sucesor de
+ * esa dependencia). No reporta dependencias que ya estaban rotas antes del
+ * cambio (no relacionadas con esta edición).
+ */
+export function findDependenciesBrokenByEdit(
+  tasks: Task[],
+  editedTaskId: string,
+  patch: Partial<Task>,
+): BrokenDependency[] {
+  const byId = new Map(tasks.map((t) => [t.id, t]));
+  const editedAfter = { ...byId.get(editedTaskId), ...patch } as Task;
+  const afterOf = (id: string): Task | undefined =>
+    id === editedTaskId ? editedAfter : byId.get(id);
+
+  const broken: BrokenDependency[] = [];
+  for (const succ of tasks) {
+    for (const dep of succ.dependencies ?? []) {
+      if (succ.id !== editedTaskId && dep.predecessorId !== editedTaskId) continue;
+      const predBefore = byId.get(dep.predecessorId);
+      const succBefore = byId.get(succ.id);
+      const predAfter = afterOf(dep.predecessorId);
+      const succAfter = afterOf(succ.id);
+      if (!predBefore || !succBefore || !predAfter || !succAfter) continue;
+      const wasValid = isDependencyDateValid(predBefore, succBefore, dep.type);
+      const isValid = isDependencyDateValid(predAfter, succAfter, dep.type);
+      if (wasValid && !isValid) {
+        broken.push({
+          dependencyId: dep.id,
+          type: dep.type,
+          successorId: succ.id,
+          successorTitle: succBefore.title,
+          predecessorId: dep.predecessorId,
+          predecessorTitle: predBefore.title,
+        });
+      }
+    }
+  }
+  return broken;
 }
 
 export interface ScheduleInfo {

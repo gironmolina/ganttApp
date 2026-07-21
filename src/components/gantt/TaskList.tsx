@@ -19,6 +19,7 @@ import {
   GripVertical,
   Columns3,
   Flag,
+  CalendarArrowDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -268,6 +269,15 @@ export function TaskList({
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-1.5 text-[11px]"
+            title="Ordenar por fecha (real → estimada → planificada)"
+            onClick={() => ganttStore.sortByDate()}
+          >
+            <CalendarArrowDown className="h-3 w-3" />
+          </Button>
           <Button
             size="sm"
             variant="ghost"
