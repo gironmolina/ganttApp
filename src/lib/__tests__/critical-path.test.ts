@@ -98,7 +98,11 @@ describe("validateDependency", () => {
 
 describe("isDependencyDateValid", () => {
   it("FS: válida si el predecesor termina antes o al mismo tiempo que empieza el sucesor", () => {
-    const pred = makeTask({ id: "p", initialStartDate: "2026-05-04", initialEndDate: "2026-05-08" });
+    const pred = makeTask({
+      id: "p",
+      initialStartDate: "2026-05-04",
+      initialEndDate: "2026-05-08",
+    });
     const succOk = makeTask({
       id: "s",
       initialStartDate: "2026-05-08",
@@ -122,7 +126,11 @@ describe("isDependencyDateValid", () => {
       estimatedEndDate: "2026-05-06",
       actualEndDate: "2026-05-12", // real, posterior a estimada e inicial
     });
-    const succ = makeTask({ id: "s", initialStartDate: "2026-05-08", initialEndDate: "2026-05-12" });
+    const succ = makeTask({
+      id: "s",
+      initialStartDate: "2026-05-08",
+      initialEndDate: "2026-05-12",
+    });
     // Con la estimada (05-06) sería válida; con la real (05-12) deja de serlo.
     expect(isDependencyDateValid(pred, succ, "FS")).toBe(false);
   });
@@ -134,8 +142,16 @@ describe("isDependencyDateValid", () => {
   });
 
   it("FF/SS/SF siguen la misma restricción que usa el CPM", () => {
-    const pred = makeTask({ id: "p", initialStartDate: "2026-05-04", initialEndDate: "2026-05-08" });
-    const succ = makeTask({ id: "s", initialStartDate: "2026-05-04", initialEndDate: "2026-05-08" });
+    const pred = makeTask({
+      id: "p",
+      initialStartDate: "2026-05-04",
+      initialEndDate: "2026-05-08",
+    });
+    const succ = makeTask({
+      id: "s",
+      initialStartDate: "2026-05-04",
+      initialEndDate: "2026-05-08",
+    });
     expect(isDependencyDateValid(pred, succ, "FF")).toBe(true); // fin == fin
     expect(isDependencyDateValid(pred, succ, "SS")).toBe(true); // inicio == inicio
     expect(isDependencyDateValid(pred, succ, "SF")).toBe(true); // inicio pred <= fin succ

@@ -99,6 +99,12 @@ export function GanttPage() {
     const onMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
+      if (
+        document.body.style.pointerEvents === "none" &&
+        !target.closest("[data-radix-popper-content-wrapper]")
+      ) {
+        return;
+      }
       if (target.closest("[data-task-editor]")) return;
       if (target.closest("[data-task-bar]")) return;
       if (target.closest("[data-task-row]")) return;

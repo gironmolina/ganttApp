@@ -83,6 +83,12 @@ export function TaskDetail({
     const onMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
+      if (
+        document.body.style.pointerEvents === "none" &&
+        !target.closest("[data-radix-popper-content-wrapper]")
+      ) {
+        return;
+      }
       if (addDependencyFormRef.current?.contains(target)) return;
       if (target.closest("[data-radix-popper-content-wrapper]")) return;
       setIsAddingDependency(false);
