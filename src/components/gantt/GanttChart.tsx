@@ -128,6 +128,18 @@ export function GanttChart({
     return list;
   }, [order, barPos]);
 
+  // Dentro de un mismo <svg> el orden de pintado lo da el orden en el DOM (no
+  // hay z-index por elemento), así que para que la(s) flecha(s) de la tarea
+  // resaltada queden siempre por encima de las demás (incluso si se cruzan),
+  // hay que dibujarlas al final. Sort estable: las no resaltadas conservan su
+  // orden relativo, las resaltadas pasan al final.
+  const orderedArrows = useMemo(() => {
+    if (!hasHighlight) return arrows;
+    const isHighlighted = (a: (typeof arrows)[number]) =>
+      hoveredId === a.predId || hoveredId === a.succId;
+    return [...arrows].sort((a, b) => Number(isHighlighted(a)) - Number(isHighlighted(b)));
+  }, [arrows, hoveredId, hasHighlight]);
+
   const totalRowsHeight = order.length * ROW_HEIGHT;
 
   // Crosshair de columna: mutación DOM directa sobre dos overlays para no
@@ -600,7 +612,7 @@ export function GanttChart({
                   <polygon points="0,0 6,3 0,6" fill="context-stroke" />
                 </marker>
               </defs>
-              {arrows.map((a) => {
+              {orderedArrows.map((a) => {
                 const highlight = hoveredId === a.predId || hoveredId === a.succId;
                 return (
                   <path
