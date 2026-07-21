@@ -128,6 +128,19 @@ export function GanttChart({
     return list;
   }, [order, barPos]);
 
+  // Tareas que participan en al menos una dependencia (como predecesora o
+  // como sucesora). Si una tarea no tiene ninguna, hacer hover sobre ella no
+  // debe activar el resaltado de flechas (no hay nada que resaltar, y
+  // atenuar el resto de líneas sería confuso sin motivo).
+  const tasksWithDependencies = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of tasks) {
+      if ((t.dependencies?.length ?? 0) > 0) set.add(t.id);
+      for (const dep of t.dependencies ?? []) set.add(dep.predecessorId);
+    }
+    return set;
+  }, [tasks]);
+
   // Dentro de un mismo <svg> el orden de pintado lo da el orden en el DOM (no
   // hay z-index por elemento), así que para que la(s) flecha(s) de la tarea
   // resaltada queden siempre por encima de las demás (incluso si se cruzan),
@@ -347,27 +360,47 @@ export function GanttChart({
             // Which bar is clickable (prefer estimated, fallback to initial)
             const clickBar = hasEstimated ? "estimated" : hasInitial ? "initial" : null;
 
-            // Union of all drawn bar segments — used for a full clickable area
+            // Union de los segmentos realmente pintados — usada como área
+            // clicable/hoverable. Una capa oculta desde la leyenda no cuenta
+            // como pintada, aunque la tarea tenga esos datos.
             const drawnLefts: number[] = [];
             const drawnRights: number[] = [];
-            if (hasInitial) {
+            if (hasInitial && layerVisibility.initial) {
               drawnLefts.push(iLeft);
               drawnRights.push(iLeft + iWidth);
             }
-            if (hasEstimated) {
+            if (hasEstimated && layerVisibility.estimated) {
               drawnLefts.push(eLeft);
               drawnRights.push(eLeft + eWidth);
             }
-            if (hasActual) {
+            if (hasActual && layerVisibility.onTrack) {
               drawnLefts.push(aLeft);
               drawnRights.push(aLeft + aWidth);
             }
-            if (isDelayed && effectiveDelayWidth > 0) {
+            if (isDelayed && layerVisibility.delayed && effectiveDelayWidth > 0) {
               drawnRights.push(effectiveDelayLeft + effectiveDelayWidth);
             }
             const barUnionLeft = drawnLefts.length ? Math.min(...drawnLefts) : 0;
             const barUnionRight = drawnRights.length ? Math.max(...drawnRights) : 0;
             const barUnionWidth = barUnionRight - barUnionLeft;
+
+            // El hover (sync con TaskList + resaltado de flechas) solo debe
+            // activarse sobre el campo pintado (las barras), no en cualquier
+            // punto de la fila. Se adjunta a los elementos interactivos que
+            // cubren ese área (el resto ya es pointer-events-none y deja pasar
+            // el hover hacia el botón de unión que hay debajo). El resaltado
+            // de flechas además solo aplica si la tarea participa en alguna
+            // dependencia; si no tiene ninguna, no hay nada que resaltar.
+            const barHoverHandlers = {
+              onMouseEnter: () => {
+                setHoveredTask(task.id);
+                if (tasksWithDependencies.has(task.id)) setHoveredId(task.id);
+              },
+              onMouseLeave: () => {
+                setHoveredTask(null);
+                setHoveredId(null);
+              },
+            };
 
             return (
               <div
@@ -379,14 +412,6 @@ export function GanttChart({
                   selectedId === task.id && "bg-primary/15 border-l-2 border-l-primary",
                 )}
                 style={{ height: ROW_HEIGHT }}
-                onMouseEnter={() => {
-                  setHoveredTask(task.id);
-                  setHoveredId(task.id);
-                }}
-                onMouseLeave={() => {
-                  setHoveredTask(null);
-                  setHoveredId(null);
-                }}
               >
                 {/* day grid */}
                 <div className="pointer-events-none absolute inset-0 flex">
@@ -411,6 +436,7 @@ export function GanttChart({
                     aria-label={`Editar ${task.title}`}
                     className="absolute top-1/2 -translate-y-1/2 cursor-pointer bg-transparent"
                     style={{ left: barUnionLeft, width: barUnionWidth, height: 22, zIndex: 0 }}
+                    {...barHoverHandlers}
                   />
                 )}
 
@@ -426,6 +452,7 @@ export function GanttChart({
                     )}
                     style={{ left: normalLeft, width: normalWidth, height: 22, zIndex: 1 }}
                     title={`Real: ${task.title} · ${progress}%${hasEstimated ? ` · Estimada: ${task.estimatedStartDate} → ${task.estimatedEndDate}` : ""}`}
+                    {...barHoverHandlers}
                   />
                 )}
 
@@ -522,6 +549,7 @@ export function GanttChart({
                       )}
                       style={{ left: eLeft, width: eWidth, height: 22, zIndex: 4 }}
                       title={`${task.title} · Estimada: ${task.estimatedStartDate} → ${task.estimatedEndDate}`}
+                      {...barHoverHandlers}
                     />
                   ))}
 
