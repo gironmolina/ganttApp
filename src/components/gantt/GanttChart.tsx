@@ -373,29 +373,46 @@ export function GanttChart({
             // Which bar is clickable (prefer estimated, fallback to initial)
             const clickBar = hasEstimated ? "estimated" : hasInitial ? "initial" : null;
 
-            // Union de los segmentos realmente pintados — usada como área
-            // clicable/hoverable. Una capa oculta desde la leyenda no cuenta
-            // como pintada, aunque la tarea tenga esos datos.
-            const drawnLefts: number[] = [];
-            const drawnRights: number[] = [];
+            // Segmentos realmente pintados — usados como área clicable/
+            // hoverable. Una capa oculta desde la leyenda no cuenta como
+            // pintada, aunque la tarea tenga esos datos. A diferencia de un
+            // único bounding box (min-max), aquí se fusionan solo los
+            // intervalos que se tocan o solapan: el hueco entre, por ejemplo,
+            // la barra inicial y la estimada (cuando hay retraso de inicio)
+            // NO cuenta como pintado salvo que la flecha de "Retraso inicio"
+            // esté activa y lo rellene visualmente.
+            const paintedIntervals: { left: number; right: number }[] = [];
             if (hasInitial && layerVisibility.initial) {
-              drawnLefts.push(iLeft);
-              drawnRights.push(iLeft + iWidth);
+              paintedIntervals.push({ left: iLeft, right: iLeft + iWidth });
             }
             if (hasEstimated && layerVisibility.estimated) {
-              drawnLefts.push(eLeft);
-              drawnRights.push(eLeft + eWidth);
+              paintedIntervals.push({ left: eLeft, right: eLeft + eWidth });
             }
             if (hasActual && layerVisibility.onTrack) {
-              drawnLefts.push(aLeft);
-              drawnRights.push(aLeft + aWidth);
+              paintedIntervals.push({ left: normalLeft, right: normalLeft + normalWidth });
             }
             if (isDelayed && layerVisibility.delayed && effectiveDelayWidth > 0) {
-              drawnRights.push(effectiveDelayLeft + effectiveDelayWidth);
+              paintedIntervals.push({
+                left: effectiveDelayLeft,
+                right: effectiveDelayLeft + effectiveDelayWidth,
+              });
             }
-            const barUnionLeft = drawnLefts.length ? Math.min(...drawnLefts) : 0;
-            const barUnionRight = drawnRights.length ? Math.max(...drawnRights) : 0;
-            const barUnionWidth = barUnionRight - barUnionLeft;
+            if (layerVisibility.startDelay && isStartDelayed && startDelayWidth > 0) {
+              paintedIntervals.push({
+                left: startDelayLeft,
+                right: startDelayLeft + startDelayWidth,
+              });
+            }
+            paintedIntervals.sort((a, b) => a.left - b.left);
+            const mergedBarSegments: { left: number; right: number }[] = [];
+            for (const seg of paintedIntervals) {
+              const last = mergedBarSegments[mergedBarSegments.length - 1];
+              if (last && seg.left <= last.right) {
+                last.right = Math.max(last.right, seg.right);
+              } else {
+                mergedBarSegments.push({ ...seg });
+              }
+            }
 
             // El hover (sync con TaskList + resaltado de flechas) solo debe
             // activarse sobre el campo pintado (las barras), no en cualquier
@@ -436,17 +453,19 @@ export function GanttChart({
                   ))}
                 </div>
 
-                {/* Clickable area covering all drawn bar segments — zIndex 0 */}
-                {barUnionWidth > 0 && (
+                {/* Área clicable/hoverable — una por cada segmento realmente
+                    pintado (no puentea huecos sin pintar) — zIndex 0 */}
+                {mergedBarSegments.map((seg, i) => (
                   <button
+                    key={i}
                     data-task-bar
                     onClick={() => onSelect(task.id)}
                     aria-label={`Editar ${task.title}`}
                     className="absolute top-1/2 -translate-y-1/2 cursor-pointer bg-transparent"
-                    style={{ left: barUnionLeft, width: barUnionWidth, height: 22, zIndex: 0 }}
+                    style={{ left: seg.left, width: seg.right - seg.left, height: 22, zIndex: 0 }}
                     {...barHoverHandlers}
                   />
-                )}
+                ))}
 
                 {/* Actual bar — zIndex 1 */}
                 {layerVisibility.onTrack && hasActual && (
