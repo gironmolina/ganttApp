@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import type { Task } from "@/lib/gantt-store";
 import { todayISO } from "@/lib/gantt-store";
 import { cn } from "@/lib/utils";
-import { setHoveredTask } from "@/lib/hover-sync";
+import { setHoveredTask, useHoveredTask } from "@/lib/hover-sync";
 import type { LayerKey } from "@/lib/layer-visibility";
 import {
   COL_WIDTH,
@@ -36,8 +36,8 @@ export function GanttChart({
   onScrollSync?: () => void;
   layerVisibility: Record<LayerKey, boolean>;
 }) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const hasHighlight = hoveredId !== null;
+  // Hover compartido (fila izquierda o barra propia) — reactivo vía store.
+  const syncedHoverId = useHoveredTask();
   const { workdays, dateToIndex, weekStarts, projectEndIdx } = useMemo(
     () => buildTimeline(tasks, projectStart, projectEnd),
     [tasks, projectStart, projectEnd],
@@ -141,6 +141,19 @@ export function GanttChart({
     return set;
   }, [tasks]);
 
+  // Id activo para el resaltado de dependencias: el hover (fila izquierda o
+  // barra propia) tiene prioridad; si no hay nada en hover, cae a la tarea
+  // que se está editando (sidebar abierto). En ambos casos, solo cuenta si
+  // esa tarea participa en alguna dependencia — si no, no hay nada que
+  // resaltar y el resto de líneas no debe atenuarse sin motivo.
+  const activeId =
+    syncedHoverId && tasksWithDependencies.has(syncedHoverId)
+      ? syncedHoverId
+      : selectedId && tasksWithDependencies.has(selectedId)
+        ? selectedId
+        : null;
+  const hasHighlight = activeId !== null;
+
   // Dentro de un mismo <svg> el orden de pintado lo da el orden en el DOM (no
   // hay z-index por elemento), así que para que la(s) flecha(s) de la tarea
   // resaltada queden siempre por encima de las demás (incluso si se cruzan),
@@ -149,9 +162,9 @@ export function GanttChart({
   const orderedArrows = useMemo(() => {
     if (!hasHighlight) return arrows;
     const isHighlighted = (a: (typeof arrows)[number]) =>
-      hoveredId === a.predId || hoveredId === a.succId;
+      activeId === a.predId || activeId === a.succId;
     return [...arrows].sort((a, b) => Number(isHighlighted(a)) - Number(isHighlighted(b)));
-  }, [arrows, hoveredId, hasHighlight]);
+  }, [arrows, activeId, hasHighlight]);
 
   const totalRowsHeight = order.length * ROW_HEIGHT;
 
@@ -388,18 +401,13 @@ export function GanttChart({
             // activarse sobre el campo pintado (las barras), no en cualquier
             // punto de la fila. Se adjunta a los elementos interactivos que
             // cubren ese área (el resto ya es pointer-events-none y deja pasar
-            // el hover hacia el botón de unión que hay debajo). El resaltado
-            // de flechas además solo aplica si la tarea participa en alguna
-            // dependencia; si no tiene ninguna, no hay nada que resaltar.
+            // el hover hacia el botón de unión que hay debajo). El gate de
+            // "solo si tiene dependencias" se aplica al leer `activeId`, no
+            // aquí, ya que este mismo setHoveredTask también sincroniza el
+            // resaltado de fila cruzado con TaskList (que sí debe ir siempre).
             const barHoverHandlers = {
-              onMouseEnter: () => {
-                setHoveredTask(task.id);
-                if (tasksWithDependencies.has(task.id)) setHoveredId(task.id);
-              },
-              onMouseLeave: () => {
-                setHoveredTask(null);
-                setHoveredId(null);
-              },
+              onMouseEnter: () => setHoveredTask(task.id),
+              onMouseLeave: () => setHoveredTask(null),
             };
 
             return (
@@ -641,7 +649,7 @@ export function GanttChart({
                 </marker>
               </defs>
               {orderedArrows.map((a) => {
-                const highlight = hoveredId === a.predId || hoveredId === a.succId;
+                const highlight = activeId === a.predId || activeId === a.succId;
                 return (
                   <path
                     key={a.id}
