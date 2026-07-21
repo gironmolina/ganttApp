@@ -619,8 +619,8 @@ export function GanttChart({
                     key={a.id}
                     d={a.d}
                     fill="none"
-                    stroke={highlight ? "var(--status-complete)" : "var(--muted-foreground)"}
-                    strokeWidth="1.5"
+                    stroke={highlight ? "var(--status-blocked)" : "var(--muted-foreground)"}
+                    strokeWidth={highlight ? 1.7 : 1.2}
                     strokeOpacity="0.7"
                     markerEnd="url(#dep-arrowhead)"
                   />
