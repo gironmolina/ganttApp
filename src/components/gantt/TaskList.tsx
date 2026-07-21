@@ -226,7 +226,7 @@ export function TaskList({
 
   return (
     <div className={cn("flex min-h-0 flex-col gap-2", resizing && "select-none")}>
-      <div className="flex h-[40px] shrink-0 items-center justify-between overflow-hidden rounded-md border bg-card px-2">
+      <div className="flex h-[48px] shrink-0 items-center justify-between overflow-hidden rounded-md border bg-card px-2">
         <div className="text-xs font-semibold">Tareas</div>
         <div className="flex items-center gap-1">
           <DropdownMenu>

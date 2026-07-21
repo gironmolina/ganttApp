@@ -342,7 +342,7 @@ function Legend() {
     { c: "var(--muted-foreground)", l: "Dependencias", key: "dependencies", arrow: true },
   ];
   return (
-    <div className="flex h-[40px] shrink-0 flex-wrap items-center gap-3 rounded-md border bg-card px-3 text-xs">
+    <div className="flex h-[48px] shrink-0 flex-wrap content-center items-center gap-x-2.5 gap-y-1 rounded-md border bg-card px-2.5 py-1 text-[11px]">
       {items.map((i) => {
         const visible = visibility[i.key];
         return (
@@ -350,34 +350,34 @@ function Legend() {
             key={i.key}
             onClick={() => toggleLayer(i.key)}
             className={cn(
-              "flex items-center gap-1.5 cursor-pointer rounded px-0.5 transition-opacity hover:bg-muted/50",
+              "flex items-center gap-1 cursor-pointer rounded px-0.5 transition-opacity hover:bg-muted/50",
               !visible && "opacity-40",
             )}
             title={visible ? `Ocultar ${i.l}` : `Mostrar ${i.l}`}
           >
             {i.arrow ? (
-              <svg width="16" height="12" className="shrink-0">
-                <line x1="0" y1="6" x2="10" y2="6" stroke={i.c} strokeWidth="2" />
-                <polygon points="16,6 10,2 10,10" fill={i.c} />
+              <svg width="13" height="10" className="shrink-0">
+                <line x1="0" y1="5" x2="8" y2="5" stroke={i.c} strokeWidth="2" />
+                <polygon points="13,5 8,1.5 8,8.5" fill={i.c} />
               </svg>
             ) : i.dash ? (
               <span
-                className="h-3 w-3 shrink-0 border-2 border-dashed bg-transparent"
+                className="h-2.5 w-2.5 shrink-0 border-2 border-dashed bg-transparent"
                 style={{ borderColor: i.c }}
               />
             ) : i.solid ? (
               <span
-                className="h-3 w-3 shrink-0 border-2 border-solid bg-transparent"
+                className="h-2.5 w-2.5 shrink-0 border-2 border-solid bg-transparent"
                 style={{ borderColor: i.c }}
               />
             ) : i.complete ? (
               <span
-                className="h-3 w-3 shrink-0 border-[3px] border-solid bg-transparent"
+                className="h-2.5 w-2.5 shrink-0 border-[2.5px] border-solid bg-transparent"
                 style={{ borderColor: i.c }}
               />
             ) : i.partialBlock ? (
               <span
-                className="h-3 w-3 shrink-0 border-l-2 border-r-2 border-solid"
+                className="h-2.5 w-2.5 shrink-0 border-l-2 border-r-2 border-solid"
                 style={{
                   borderColor: i.c,
                   backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 1.5px, ${i.c} 1.5px, ${i.c} 3px)`,
@@ -385,14 +385,14 @@ function Legend() {
               />
             ) : i.overtime ? (
               <span
-                className="h-3 w-3 shrink-0 border-l-2 border-r-2 border-solid"
+                className="h-2.5 w-2.5 shrink-0 border-l-2 border-r-2 border-solid"
                 style={{
                   borderColor: "oklch(0.7 0.15 50 / 0.5)",
                   backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 1.5px, oklch(0.7 0.15 50 / 0.3) 1.5px, oklch(0.7 0.15 50 / 0.3) 3px)`,
                 }}
               />
             ) : (
-              <span className="h-3 w-3 shrink-0 rounded-sm" style={{ background: i.c }} />
+              <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: i.c }} />
             )}
             <span className={cn("text-muted-foreground", !visible && "line-through")}>{i.l}</span>
           </button>
