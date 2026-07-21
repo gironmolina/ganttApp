@@ -621,8 +621,8 @@ export function GanttChart({
                     fill="none"
                     stroke={highlight ? "var(--status-blocked)" : "var(--muted-foreground)"}
                     strokeWidth={highlight ? 1.7 : 1.2}
-                    strokeOpacity="0.7"
-                    markerEnd="url(#dep-arrowhead)"
+                    strokeOpacity={highlight ? 0.7 : hasHighlight ? 0.15 : 0.7}
+                    markerEnd={highlight || !hasHighlight ? "url(#dep-arrowhead)" : undefined}
                   />
                 );
               })}
