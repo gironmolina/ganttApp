@@ -52,13 +52,15 @@ export function GanttChart({
   const todayIdx = dateToIndex.has(todayIso) ? dateToIndex.get(todayIso)! : null;
   const todayOffset = todayIdx !== null ? todayIdx * COL_WIDTH + COL_WIDTH / 2 : -1;
 
-  // Posición pixel de la barra base (estimada→inicial) de cada tarea visible, más
-  // su índice de fila. Se usa para dibujar las flechas de dependencia entre barras.
+  // Posición pixel de la barra base de cada tarea visible, más su índice de
+  // fila. Se usa para dibujar las flechas de dependencia entre barras: el
+  // inicio usa estimada→inicial; el fin prioriza la fecha real (si existe)
+  // sobre la estimada→inicial.
   const barPos = useMemo(() => {
     const map = new Map<string, { rowIdx: number; left: number; right: number }>();
     order.forEach((task, rowIdx) => {
       const s = task.estimatedStartDate || task.initialStartDate;
-      const e = task.estimatedEndDate || task.initialEndDate;
+      const e = task.actualEndDate || task.estimatedEndDate || task.initialEndDate;
       if (!s || !e) return;
       const sIdx = findDateIndex(s, "start", workdays, dateToIndex);
       const eIdx = findDateIndex(e, "end", workdays, dateToIndex);
