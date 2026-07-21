@@ -521,6 +521,54 @@ export function TaskDetail({
         </button>
         {!isCollapsed("dependencias") && (
           <div className="space-y-1.5 px-2 pb-2">
+            {task.dependencies.length === 0 && !isAddingDependency && (
+              <p className="text-[10px] text-muted-foreground">Sin dependencias.</p>
+            )}
+            {task.dependencies.map((dep) => {
+              const pred = allTasks.find((t) => t.id === dep.predecessorId);
+              return (
+                <div
+                  key={dep.id}
+                  className="flex items-center gap-1.5 rounded border bg-muted/30 p-1.5"
+                >
+                  <span className="min-w-0 flex-1 truncate text-[10px]" title={pred?.title}>
+                    {pred?.title ?? "(tarea eliminada)"}
+                  </span>
+                  <Select
+                    value={dep.type}
+                    onValueChange={(v) =>
+                      store.updateDependency(task.id, dep.id, v as DependencyType)
+                    }
+                  >
+                    <SelectTrigger className="h-6 w-[132px] text-[10px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FS" className="text-[10px]">
+                        FS · Fin → Inicio
+                      </SelectItem>
+                      <SelectItem value="FF" className="text-[10px]">
+                        FF · Fin → Fin
+                      </SelectItem>
+                      <SelectItem value="SS" className="text-[10px]">
+                        SS · Inicio → Inicio
+                      </SelectItem>
+                      <SelectItem value="SF" className="text-[10px]">
+                        SF · Inicio → Fin
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-xs"
+                    onClick={() => store.removeDependency(task.id, dep.id)}
+                  >
+                    ×
+                  </Button>
+                </div>
+              );
+            })}
             {isAddingDependency &&
               (() => {
                 const candidates = allTasks.filter(
@@ -588,55 +636,6 @@ export function TaskDetail({
                   </div>
                 );
               })()}
-
-            {task.dependencies.length === 0 && (
-              <p className="text-[10px] text-muted-foreground">Sin dependencias.</p>
-            )}
-            {task.dependencies.map((dep) => {
-              const pred = allTasks.find((t) => t.id === dep.predecessorId);
-              return (
-                <div
-                  key={dep.id}
-                  className="flex items-center gap-1.5 rounded border bg-muted/30 p-1.5"
-                >
-                  <span className="min-w-0 flex-1 truncate text-[10px]" title={pred?.title}>
-                    {pred?.title ?? "(tarea eliminada)"}
-                  </span>
-                  <Select
-                    value={dep.type}
-                    onValueChange={(v) =>
-                      store.updateDependency(task.id, dep.id, v as DependencyType)
-                    }
-                  >
-                    <SelectTrigger className="h-6 w-[132px] text-[10px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="FS" className="text-[10px]">
-                        FS · Fin → Inicio
-                      </SelectItem>
-                      <SelectItem value="FF" className="text-[10px]">
-                        FF · Fin → Fin
-                      </SelectItem>
-                      <SelectItem value="SS" className="text-[10px]">
-                        SS · Inicio → Inicio
-                      </SelectItem>
-                      <SelectItem value="SF" className="text-[10px]">
-                        SF · Inicio → Fin
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0 text-xs"
-                    onClick={() => store.removeDependency(task.id, dep.id)}
-                  >
-                    ×
-                  </Button>
-                </div>
-              );
-            })}
           </div>
         )}
       </div>
