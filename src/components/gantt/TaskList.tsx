@@ -454,7 +454,7 @@ function SortableRow({
       data-row-id={task.id}
       className={cn(
         "grid h-8 cursor-pointer items-center gap-1 border-b px-2 text-xs",
-        isSelected && "bg-accent/50",
+        isSelected && "bg-primary/15 border-l-2 border-l-primary shadow-sm",
         isDragging && "z-10 bg-accent/20 shadow-md",
       )}
       onClick={() => onSelect(task.id)}

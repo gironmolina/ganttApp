@@ -362,7 +362,7 @@ export function GanttChart({
                 className={cn(
                   "relative border-b",
                   rowIdx % 2 === 1 && "bg-muted/20",
-                  selectedId === task.id && "bg-accent/50",
+                  selectedId === task.id && "bg-primary/15 border-l-2 border-l-primary",
                 )}
                 style={{ height: ROW_HEIGHT }}
                 onMouseEnter={() => setHoveredTask(task.id)}
