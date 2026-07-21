@@ -80,12 +80,7 @@ function effectiveEnd(task: Task): string | undefined {
   return task.actualEndDate || task.estimatedEndDate || task.initialEndDate;
 }
 
-/**
- * ¿Las fechas efectivas de `pred` y `succ` cumplen la restricción del tipo de
- * dependencia dado? Permisivo si falta alguna de las fechas relevantes (no hay
- * suficiente información para contradecir la regla).
- */
-export function isDependencyDateValid(pred: Task, succ: Task, type: DependencyType): boolean {
+function isDependencyDateValid(pred: Task, succ: Task, type: DependencyType): boolean {
   switch (type) {
     case "FS": {
       const a = effectiveEnd(pred);
@@ -110,18 +105,10 @@ export function isDependencyDateValid(pred: Task, succ: Task, type: DependencyTy
   }
 }
 
-const DEPENDENCY_DATE_RULE_LABEL: Record<DependencyType, string> = {
-  FS: "debe terminar antes de que empiece esta tarea (Fin → Inicio)",
-  FF: "debe terminar antes o al mismo tiempo que esta tarea (Fin → Fin)",
-  SS: "debe empezar antes o al mismo tiempo que esta tarea (Inicio → Inicio)",
-  SF: "debe empezar antes de que termine esta tarea (Inicio → Fin)",
-};
-
 /**
  * Valida si se puede crear una dependencia donde `successorId` pasa a depender
  * de `predecessorId` con el tipo dado. Rechaza: auto-referencia, duplicada,
- * padre-hijo/ancestro-descendiente, cíclica, redundante y fechas incompatibles
- * con el tipo (FS/FF/SS/SF).
+ * padre-hijo/ancestro-descendiente, cíclica y redundante.
  */
 export function validateDependency(
   tasks: Task[],
@@ -169,14 +156,6 @@ export function validateDependency(
   // (predecessor -> X -> ... -> successor), la arista directa no aporta nada.
   if (reachable(successorsOf, predecessorId, successorId)) {
     return { ok: false, reason: "Esa dependencia es redundante (ya existe una ruta indirecta)." };
-  }
-
-  // Fechas incompatibles con el tipo de dependencia
-  if (!isDependencyDateValid(predecessor, successor, type)) {
-    return {
-      ok: false,
-      reason: `"${predecessor.title}" ${DEPENDENCY_DATE_RULE_LABEL[type]}.`,
-    };
   }
 
   return { ok: true };

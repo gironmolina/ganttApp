@@ -10,7 +10,6 @@ import {
 import { countWorkdays } from "@/lib/gantt-utils";
 import {
   validateDependency,
-  isDependencyDateValid,
   findDependenciesBrokenByEdit,
   type BrokenDependency,
 } from "@/lib/critical-path";
@@ -565,9 +564,7 @@ export function TaskDetail({
               (() => {
                 const candidates = allTasks.filter(
                   (t) =>
-                    t.id !== task.id &&
-                    !task.dependencies.some((d) => d.predecessorId === t.id) &&
-                    isDependencyDateValid(t, task, newDepType),
+                    t.id !== task.id && !task.dependencies.some((d) => d.predecessorId === t.id),
                 );
                 return (
                   <div
