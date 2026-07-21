@@ -14,6 +14,7 @@ import {
   findDependenciesBrokenByEdit,
   type BrokenDependency,
 } from "@/lib/critical-path";
+import { useCollapsedSections, toggleSection, isSectionCollapsed } from "@/lib/section-collapse";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,7 +65,7 @@ export function TaskDetail({
 }) {
   const [commentAuthor, setCommentAuthor] = useState("");
   const [commentText, setCommentText] = useState("");
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  useCollapsedSections();
   const [newDepType, setNewDepType] = useState<DependencyType>("FS");
   const [isAddingDependency, setIsAddingDependency] = useState(false);
   const addDependencyFormRef = useRef<HTMLDivElement>(null);
@@ -97,16 +98,7 @@ export function TaskDetail({
     return () => document.removeEventListener("mousedown", onMouseDown);
   }, [isAddingDependency]);
 
-  const toggleSection = (id: string) => {
-    setCollapsedSections((prev) => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
-  };
-
-  const isCollapsed = (id: string) => collapsedSections.has(id);
+  const isCollapsed = isSectionCollapsed;
 
   // Cualquier edición de fecha pasa por aquí: si rompe una dependencia ya
   // creada (deja de cumplir la regla de su tipo), pide confirmación antes de
