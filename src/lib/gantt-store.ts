@@ -5,7 +5,6 @@ import {
   type ProjectData,
 } from "./json-persist";
 import { markDirty } from "./dirty-store";
-import { effectiveStart } from "./critical-path";
 
 export type BlockType = "partial" | "total";
 export type Priority = "high" | "medium" | "low" | "none";
@@ -425,12 +424,21 @@ export const store = {
     persist();
   },
   /**
-   * Ordena las tareas por fecha de inicio ascendente (real → estimada →
-   * inicial), respetando la jerarquía: cada grupo de hermanos (mismo
-   * parentId) se reordena de forma independiente. Las tareas sin ninguna
-   * fecha van al final, manteniendo su orden relativo actual.
+   * Ordena las tareas por disponibilidad de fecha primero (tiene real > tiene
+   * solo estimada > tiene solo inicial > ninguna) y, dentro de cada nivel,
+   * por fecha de inicio ascendente. Así una tarea con fecha real siempre
+   * queda por encima de cualquiera sin fecha real, sin importar el valor
+   * cronológico de esta última. Respeta la jerarquía: cada grupo de
+   * hermanos (mismo parentId) se reordena de forma independiente. Las
+   * tareas sin ninguna fecha van al final, manteniendo su orden relativo.
    */
   sortByDate() {
+    const dateTier = (t: Task): { tier: number; date: string | undefined } => {
+      if (t.actualStartDate) return { tier: 0, date: t.actualStartDate };
+      if (t.estimatedStartDate) return { tier: 1, date: t.estimatedStartDate };
+      if (t.initialStartDate) return { tier: 2, date: t.initialStartDate };
+      return { tier: 3, date: undefined };
+    };
     const byParent = new Map<string | null, Task[]>();
     for (const t of tasks) {
       const arr = byParent.get(t.parentId) ?? [];
@@ -441,11 +449,10 @@ export const store = {
     for (const arr of byParent.values()) {
       const base = [...arr].sort((a, b) => a.position - b.position);
       const sorted = base
-        .map((t) => ({ t, d: effectiveStart(t) }))
+        .map((t) => ({ t, ...dateTier(t) }))
         .sort((a, b) => {
-          if (a.d && b.d) return a.d < b.d ? -1 : a.d > b.d ? 1 : 0;
-          if (a.d) return -1;
-          if (b.d) return 1;
+          if (a.tier !== b.tier) return a.tier - b.tier;
+          if (a.date && b.date) return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
           return 0;
         })
         .map((x) => x.t);

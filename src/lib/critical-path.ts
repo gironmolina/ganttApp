@@ -71,7 +71,7 @@ function buildSuccessorsMap(tasks: Task[]): Map<string, string[]> {
 }
 
 /** Fecha de inicio efectiva: real → estimada → inicial. */
-export function effectiveStart(task: Task): string | undefined {
+function effectiveStart(task: Task): string | undefined {
   return task.actualStartDate || task.estimatedStartDate || task.initialStartDate;
 }
 
